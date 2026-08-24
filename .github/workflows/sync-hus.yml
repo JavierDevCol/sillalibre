@@ -1,0 +1,36 @@
+# ============================================================
+# Sync HUs → GitHub Issues (decisión R5 · puente SAC↔GitHub)
+# ------------------------------------------------------------
+# Cada push a main que toque artifacts/HU/** regenera las
+# issues correspondientes (idempotente — ver scripts/sync_hu_issues.sh).
+# Disparo manual disponible para forzar re-sincronización.
+# ============================================================
+name: Sync HUs → Issues
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/HU/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: sync-hus
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ejecutar sincronizador
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: bash scripts/sync_hu_issues.sh
