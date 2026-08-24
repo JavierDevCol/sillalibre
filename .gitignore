@@ -1,0 +1,69 @@
+# ============================================================
+# app-barber — .gitignore
+# Regla dura (ADR-003): cero credenciales en código o commits.
+# ============================================================
+
+# --- Interno del workspace (decisión PO 2026-08-23: no versionar) ---
+.SAC/
+prompts/
+.opencode/
+opencode.json
+
+# --- SO / Editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.bak
+
+# --- Frontends: Next.js (web-cliente) y Angular (portal-negocio) ---
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.angular/
+out/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+
+# --- Java 21 / Spring Boot 3 (IAM, EST, STF, RES, CPN, RSN, DSC) ---
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.gradle/
+hs_err_pid*
+
+# --- Go 1.22+ (servicio NTF) ---
+bin/
+*.test
+*.out
+
+# --- Logs genéricos ---
+*.log
+logs/
+
+# --- Entornos y secretos (prohibido commitear) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# --- Terraform (la IaC SÍ se versiona; su estado NO) ---
+.terraform/
+.terraform.tfstate.lock.info
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfplan
+*.tfvars
+!*.tfvars.example
+override.tf
+*_override.tf
