@@ -1,7 +1,9 @@
-# 🪒 app-barber
+# 🪑 SillaLibre
 
 > **Plataforma digital (marketplace bilateral)** que conecta establecimientos de barbería y belleza con clientes finales en **Cúcuta, Norte de Santander (Colombia)**.
 > Los negocios publican su operación; los clientes descubren, reservan y fidelizan. Diferenciador: **cuponera/fidelización por establecimiento**.
+>
+> ### *"Reserva tu silla. Gana tu lugar."*
 
 ---
 

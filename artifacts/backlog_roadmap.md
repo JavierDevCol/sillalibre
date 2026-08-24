@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Proyecto** | app-barber |
+| **Proyecto** | SillaLibre *(codename técnico: app-barber)* |
 | **Fecha** | 2026-08-23 |
 | **Versión** | 1.1 |
 | **Estado** | ✅ Vigente — backlog nivel épica + marco de ejecución (cadencia, capacidad, ceremonias) definido |
@@ -22,6 +22,7 @@ Responden las 3 preguntas clave detectadas en la planificación inicial. Complem
 | **R1** | **Mercado piloto: Cúcuta, Norte de Santander, Colombia** | Moneda **COP**, idioma español, zona horaria `America/Bogota` (UTC−5, sin DST — simplifica jornadas de STF). No existe región AWS en Colombia: **región de despliegue = us-east-1** (latencia ~60–80ms desde Cúcuta, mejor costo que sa-east-1). Justificación registrada. | Desbloquea ENA-0-01; cierra el pendiente estratégico §13.1 de la Visión; plantillas de cuponera se expresan en COP; densidad urbana de Cúcuta hace viable búsqueda por radio (decidir geohash/S2 en diseño de DSC) | 2026-08-23 |
 | **R2** | **Autenticación cliente: doble vía** | Email+password **y** OAuth social (Google como proveedor mínimo viable). Ambos flujos terminan emitiendo el mismo JWT firmado por IAM que consume el autorizador de API Gateway. | Amplía alcance de HU-IAM-01 (Sprint 1): federación OIDC + flujo local de credenciales | 2026-08-23 |
 | **R3** | **Política mínima de cancelación: autogestión libre sin sanción** | El cliente cancela por cualquier razón personal (imprevisto, demora, distancia, error) hasta el inicio de la cita, con motivo opcional registrado. Dentro de una **ventana de 2h** previas se marca *cancelación tardía* (métrica operativa, no penalización). El barbero marca **no-show** tras 10 min de gracia. Sin multas ni restricciones en MVP — hipótesis a validar con negocios piloto. | Desbloquea refinamiento de HU-E4-03 (Sprint 3); define carga de eventos hacia NTF (avisos de cancelación) y métrica de no-show para analítica futura | 2026-08-23 |
+| **R4** | **Marca: SillaLibre** 🪑 | Nombre elegido por resonancia con el gremio ("¿tiene silla libre?"), neutralidad barbería+belleza y venta del diferencial de disponibilidad en vivo. Tagline: *"Reserva tu silla. Gana tu lugar."* `app-barber` queda como codename técnico (carpeta local, docs históricos). Repo remoto: `sillalibre`. Verificado: sin colisiones de app en reservas; "Fiel" descartado por ecosistema *Cliente Fiel* (BR). Intel: Wilapp ya opera belleza-reservas en Colombia → categoría validada. | README y repo slug renombrados pre-creación del remoto (ventana única). Checklist no bloqueante para retro: dominio `sillalibre.co/.com`, handles IG/TikTok, búsqueda de marca ante la SIC | 2026-08-23 |
 
 > ⚠️ **Requisito derivado de R1:** antes del Sprint 4 (NTF), gestionar salida de sandbox de SES + DKIM/SPF del dominio (hallazgo de deliverability de la auditoría). Los recordatorios que no llegan = no-shows = hipótesis central comprometida.
 
