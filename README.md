@@ -13,7 +13,8 @@
 |-----------|-------------|
 | [`artifacts/vision_producto.md`](artifacts/vision_producto.md) | Visión del producto, decisiones D1–D6, alcance del MVP |
 | [`artifacts/backlog_roadmap.md`](artifacts/backlog_roadmap.md) | Marco de ejecución, Sprint 0, User Story Map y roadmap S0–S8 |
-| [`artifacts/ADR/`](artifacts/ADR/) | Decisiones arquitectónicas: microservicios · stack poliglota · AWS |
+| [`artifacts/ADR/`](artifacts/ADR/) | Decisiones arquitectónicas: microservicios · stack poliglota · AWS · hexagonal · persistencia · resiliencia · observabilidad · **mensajería híbrida (Kafka+RabbitMQ)** |
+| [`artifacts/blueprint_arquitectura.md`](artifacts/blueprint_arquitectura.md) | Blueprint de arquitectura consolidado (NFRs, layout, convenciones, gaps) |
 | [`arquitectura_aws.md`](arquitectura_aws.md) | Documento vivo de arquitectura (paisaje, pipeline, costos) |
 | [`artifacts/auditoria_well_architected.md`](artifacts/auditoria_well_architected.md) | Auditoría WAF y plan de endurecimiento |
 
@@ -27,14 +28,14 @@
 app-barber/
 ├── artifacts/              # Documentación de producto y ADRs
 ├── services/               # 8 microservicios (carpeta por servicio)
-│   ├── iam/                # Identidad, JWT, roles          [Java · Spring Boot 3]
-│   ├── est/                # Establecimientos, sedes, catálogo [Java]
-│   ├── stf/                # Staff, jornadas, disponibilidad   [Java]
-│   ├── res/                # ⭐ Reservas (núcleo)              [Java]
-│   ├── cpn/                # Cuponera / fidelización          [Java]
-│   ├── rsn/                # Reseñas verificadas              [Java]
-│   ├── dsc/                # Descubrimiento (CQRS)            [Java]
-│   └── ntf/                # Notificaciones                   [Go 1.22+]
+│   ├── identidad/          # Identidad, JWT, roles          [Java · Spring Boot 3]
+│   ├── establecimiento/    # Establecimientos, sedes, catálogo [Java]
+│   ├── personal/           # Personal, jornadas, disponibilidad [Java]
+│   ├── reserva/            # ⭐ Reservas (núcleo)              [Java]
+│   ├── fidelizacion/       # Fidelización / cuponera         [Java]
+│   ├── resena/             # Reseñas verificadas              [Java]
+│   ├── descubrimiento/     # Descubrimiento (CQRS)            [Java]
+│   └── notificacion/       # Notificaciones                   [Go 1.22+]
 ├── apps/
 │   ├── web-cliente/        # Frontend público                 [Next.js 14+]
 │   └── portal-negocio/     # Back-office dueños/barberos/admin [Angular 17+]
@@ -45,12 +46,13 @@ app-barber/
 
 ## 🛠️ Stack (ADR-002/003)
 
-- **Backend:** Java 21 · Spring Boot 3 (7 servicios) + Go 1.22 (NTF)
+- **Backend:** Java 21 · Spring Boot 3 (7 servicios) + Go 1.22 (notificacion)
 - **Frontends:** Next.js 14 (cliente, SSR/SEO) · Angular 17 (portal negocio)
-- **Cloud AWS:** ECS Fargate · API Gateway (JWT) · EventBridge + SQS(+DLQ) · RDS PostgreSQL 17 · DynamoDB · SES/SNS · CloudWatch + X-Ray
+- **Mensajería:** Apache Kafka KRaft (eventos de dominio) + RabbitMQ (tareas de trabajo) — [ADR-008](artifacts/ADR/ADR-008-mensajeria-hibrida-kafka-rabbitmq.md)
+- **Cloud AWS:** ECS Fargate · API Gateway (JWT) · RDS PostgreSQL 17 · DynamoDB · SES/SNS · CloudWatch + X-Ray
 - **Plataforma:** Terraform (workspaces dev/prod) · GitHub Actions → ECR · contratos OpenAPI 3
 
-> Máximo 2 lenguajes backend (guardarrail ADR-001). La comunicación entre servicios es solo vía OpenAPI o eventos de dominio.
+> Máximo 2 lenguajes backend (guardarrail ADR-001). Comunicación: OpenAPI (síncrona) + Kafka/RabbitMQ (asíncrona).
 
 ---
 

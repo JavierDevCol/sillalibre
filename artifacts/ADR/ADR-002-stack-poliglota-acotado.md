@@ -38,8 +38,8 @@ Pregunta central: ¿cómo satisfacer los deseos formativos sin convertir el proy
 
 | Componente | Tecnología | Servicios / Alcance | Justificación |
 |-----------|------------|--------------------|---------------|
-| Núcleo backend (IAM, EST, STF, RES, CPN, RSN, DSC) | **Java 21 · Spring Boot 3** | 7 servicios | Velocidad donde importa; profundiza expertise existente; ecosistema maduro para outbox/JPA/security |
-| Worker de notificaciones | **Go 1.22+** | NTF | Scope pequeño y periférico = primer proyecto Go idiomático real (consumidor de colas, concurrencia) |
+| Núcleo backend (identidad, establecimiento, personal, reserva, fidelizacion, resena, descubrimiento) | **Java 21 · Spring Boot 3** | 7 servicios | Velocidad donde importa; profundiza expertise existente; ecosistema maduro para outbox/JPA/security |
+| Worker de notificaciones | **Go 1.22+** | notificacion | Scope pequeño y periférico = primer proyecto Go idiomático real (consumidor de colas, concurrencia) |
 | Web Cliente | **Next.js 14+ · TypeScript** | Frontend público | Nuevo stack solicitado, riesgo contenido; SSR/SEO para fichas públicas de negocios |
 | Portal Negocio | **Angular 17+** | Back-office dueños/barberos/admin | Profundiza stack conocido construyendo la UI más compleja |
 | Contratos | **OpenAPI 3** | Todos los servicios | Única fuente de verdad entre lenguajes; genera clientes/servidores |
@@ -64,7 +64,7 @@ Pregunta central: ¿cómo satisfacer los deseos formativos sin convertir el proy
 ### Negativas
 
 - Dos runtimes que mantener en pipelines e imágenes (mitigado: pipeline template único parametrizado)
-- Curva Go inicial ralentiza solo NTF (aceptado: es parte del objetivo)
+- Curva Go inicial ralentiza solo notificacion (aceptado: es parte del objetivo)
 - Dos mentalidades de tipado/modelado (Java OOP vs Go idiomatic) — disciplina de fronteras obligatoria
 
 ---
@@ -75,16 +75,16 @@ Pregunta central: ¿cómo satisfacer los deseos formativos sin convertir el proy
 graph TD
     subgraph BACK["Backend · max 2 lenguajes"]
         subgraph JAVA["Java 21 Spring Boot 3 · 7 servicios"]
-            IAM["IAM"]
-            EST["EST"]
-            STF["STF"]
-            RES["RES nucleo"]
-            CPN["CPN"]
-            RSN["RSN"]
-            DSC["DSC"]
+            IAM["identidad"]
+            EST["establecimiento"]
+            STF["personal"]
+            RES["reserva nucleo"]
+            CPN["fidelizacion"]
+            RSN["resena"]
+            DSC["descubrimiento"]
         end
         subgraph GO["Go 1.22 · 1 servicio"]
-            NTF["NTF Notificaciones"]
+            NTF["notificacion"]
         end
     end
 
@@ -115,7 +115,7 @@ graph TD
 
 ## Validación
 
-- Primer PR productivo en Go (NTF consumiendo cola real) dentro de las 2 primeras semanas de Fase 1
+- Primer PR productivo en Go (notificacion consumiendo cola real) dentro de las 2 primeras semanas de Fase 1
 - Cero fugas de dominio: ningún tipo/lógica de negocio compartido por librería entre lenguajes (revisión en cada PR)
 - Contratos OpenAPI versionados y publicados por servicio desde Fase 0
 

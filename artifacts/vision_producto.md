@@ -4,12 +4,12 @@
 |-------|-------|
 | **Proyecto** | app-barber |
 | **Fecha** | 2026-08-23 |
-| **Versión** | 2.0 |
+| **Versión** | 2.1 |
 | **Estado** | ✅ Vigente — análisis de negocio consolidado + decisiones arquitectónicas formalizadas (ADRs) |
 | **Documentos derivados** | [ADR-001](ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](ADR/ADR-003-plataforma-cloud-aws.md) · [`arquitectura_aws.md`](../arquitectura_aws.md) |
 | **Elaborado por** | Onad — Arquitecto de Software |
 
-> **Historial:** v0.1 = análisis inicial con recomendación de Monolito Modular (superseda por activación del objetivo formativo). v2.0 = integración de la decisión de microservicios sobre AWS.
+> **Historial:** v0.1 = análisis inicial con recomendación de Monolito Modular (superseda por activación del objetivo formativo). v2.0 = integración de la decisión de microservicios sobre AWS. v2.1 = actualización de nombres de servicios a formato descriptivo (identidad, establecimiento, personal, reserva, fidelizacion, resena, descubrimiento, notificacion).
 
 ---
 
@@ -61,7 +61,7 @@
 | Módulo | Funcionalidad esencial | Épica |
 |--------|----------------------|-------|
 | Gestión de establecimiento | Registro asistido, sedes/locales, horarios | E1 |
-| Gestión de staff | Barberos con cuenta propia, especialidades, jornadas | E2 |
+| Gestión de personal | Barberos con cuenta propia, especialidades, jornadas | E2 |
 | Catálogo de servicios | Servicios con precio informativo y duración estimada | E1 |
 | Descubrimiento | Búsqueda por cercanía o preferencia | E3 |
 | Disponibilidad en vivo | Barberos disponibles, turnos en cola, horario de cierre | E3/E4 |
@@ -89,7 +89,7 @@
 | Actor | Rol en MVP |
 |-------|-----------|
 | **Cliente final** | Descubre, reserva, recibe recordatorios, consulta historial, acumula/redime cupones, reseña |
-| **Propietario/Gerente** | Configura negocio, sedes, staff, servicios, cuponeras; ve agenda del día |
+| **Propietario/Gerente** | Configura negocio, sedes, personal, servicios, cuponeras; ve agenda del día |
 | **Barbero/Estilista** | Cuenta propia: gestiona disponibilidad, ve agenda personal, marca citas completadas, valida redención |
 | **Admin de Plataforma** | Equipo fundador: alta asistida de negocios piloto, soporte operativo, moderación |
 
@@ -98,7 +98,7 @@
 ## 6. Flujos Núcleo
 
 ```
-FLUJO 1 (Negocio):   Alta asistida → configurar sede/staff/servicios/cuponeras → agenda operativa
+FLUJO 1 (Negocio):   Alta asistida → configurar sede/personal/servicios/cuponeras → agenda operativa
 FLUJO 2 (Cliente):   Descubrir → comparar disponibilidad → reservar → recordatorio → asistir → pagar en local
 FLUJO 3 (Operación): Barbero/Dueño gestiona citas del día → marcar asistencia/completada
 ```
@@ -110,12 +110,12 @@ FLUJO 3 (Operación): Barbero/Dueño gestiona citas del día → marcar asistenc
 > **La "Cita Completada" es el evento corazón del sistema.**
 
 ```
-                        ┌─→ Historial del cliente (RES)
-CITA COMPLETADA ────────┼─→ Contador cuponera +1 visita (CPN)
-                        └─→ Habilita reseña verificada (RSN)
+                         ┌─→ Historial del cliente (reserva)
+CITA COMPLETADA ────────┼─→ Contador cuponera +1 visita (fidelizacion)
+                         └─→ Habilita reseña verificada (resena)
 ```
 
-Un solo momento del flujo operativo alimenta tres módulos simultáneamente vía mensajería asíncrona (EventBridge/SQS). Los módulos futuros (billetera, pagos) colgarán del mismo evento. **Este patrón condiciona favorablemente la arquitectura orientada a eventos adoptada.**
+Un solo momento del flujo operativo alimenta tres módulos simultáneamente vía mensajería asíncrona (Kafka KRaft + RabbitMQ). Los módulos futuros (billetera, pagos) colgarán del mismo evento. **Este patrón condiciona favorablemente la arquitectura orientada a eventos adoptada** — [ADR-008](ADR/ADR-008-mensajeria-hibrida-kafka-rabbitmq.md).
 
 ---
 
@@ -123,13 +123,13 @@ Un solo momento del flujo operativo alimenta tres módulos simultáneamente vía
 
 | Épica | Nombre | Alcance | Servicio MS | Stack | Fase de construcción* |
 |-------|--------|---------|-------------|-------|------------------------|
-| **E1** | Establecimiento | Alta asistida, sedes, horarios, catálogo | EST | Java/Spring Boot | F1 |
-| **E2** | Staff y agendas | Cuenta barbero, jornadas, disponibilidad, agenda personal | STF | Java/Spring Boot | F1 |
-| **E3** | Descubrimiento | Búsqueda cercanía/preferencia, fichas (proyecciones CQRS) | DSC | Java/Spring Boot | F2 |
-| **E4** | Reservas | Reserva, cancelación, ciclo de vida, historial | RES ⭐ núcleo | Java/Spring Boot | F1 |
-| **E5** | Notificaciones | Recordatorios, avisos de cambios/cancelaciones | NTF | **Go** | F1 |
-| **E6** | Cuponera | Plantillas predefinidas, acumulación, redención | CPN | Java/Spring Boot | F2 |
-| **E7** | Reseñas | Reseña verificada post-cita, agregados, moderación | RSN | Java/Spring Boot | F2 |
+| **E1** | Establecimiento | Alta asistida, sedes, horarios, catálogo | establecimiento | Java/Spring Boot | F1 |
+| **E2** | Personal y agendas | Cuenta barbero, jornadas, disponibilidad, agenda personal | personal | Java/Spring Boot | F1 |
+| **E3** | Descubrimiento | Búsqueda cercanía/preferencia, fichas (proyecciones CQRS) | descubrimiento | Java/Spring Boot | F2 |
+| **E4** | Reservas | Reserva, cancelación, ciclo de vida, historial | reserva ⭐ núcleo | Java/Spring Boot | F1 |
+| **E5** | Notificaciones | Recordatorios, avisos de cambios/cancelaciones | notificacion | **Go** | F1 |
+| **E6** | Cuponera | Plantillas predefinidas, acumulación, redención | fidelizacion | Java/Spring Boot | F2 |
+| **E7** | Reseñas | Reseña verificada post-cita, agregados, moderación | resena | Java/Spring Boot | F2 |
 | **E8** | Administración de plataforma | Onboarding asistido, soporte, moderación | *(sin servicio propio — portal Angular rol admin)* | Angular | F3 |
 
 \* Fases verticales de construcción definidas en ADR-001 (F0 Fundamentos → F1 Núcleo reservable → F2 Fidelización → F3 Endurecimiento).
@@ -153,7 +153,7 @@ Un solo momento del flujo operativo alimenta tres módulos simultáneamente vía
 ## 10. Supuestos por Validar
 
 1. Los establecimientos hoy gestionan con papel/WhatsApp **y quieren digitalizarse** *(validar con dueños reales)*
-2. Los propietarios mantendrán actualizados sus datos (horarios, staff, precios)
+2. Los propietarios mantendrán actualizados sus datos (horarios, personal, precios)
 3. Los clientes finales instalarán una app más para agendar
 4. Existe mercado geográfico acotado con densidad suficiente de negocios
 
@@ -180,7 +180,7 @@ Las decisiones formales y su justificación completa viven en los ADRs. Resumen 
 
 ### 12.1 Estilo — Microservicios ([ADR-001](ADR/ADR-001-adopcion-microservicios.md))
 
-- **8 microservicios custom** (7 dominio + IAM) + **Amazon API Gateway gestionado** como puerta única
+- **8 microservicios custom** (7 dominio + identidad) + **Amazon API Gateway gestionado** como puerta única
 - Comunicación: REST síncrona para consultas; **eventos de dominio asíncronos** para propagación (`CitaCompletada` es el evento semilla — §7)
 - Construcción por **fases verticales** con regla de parada y escala de retroceso definida
 
@@ -189,7 +189,7 @@ Las decisiones formales y su justificación completa viven en los ADRs. Resumen 
 | Capa | Tecnología |
 |------|-----------|
 | Backend dominante (7 servicios) | Java 21 · Spring Boot 3 |
-| Backend periférico (NTF) | Go 1.22+ |
+| Backend periférico (notificacion) | Go 1.22+ |
 | Frontends | Next.js 14+ (cliente) · Angular 17+ (negocio) |
 | Contratos | OpenAPI 3 por servicio |
 
@@ -197,7 +197,7 @@ Regla dura: máximo 2 lenguajes backend.
 
 ### 12.3 Plataforma Cloud AWS ([ADR-003](ADR/ADR-003-plataforma-cloud-aws.md))
 
-ECS Fargate · API Gateway · EventBridge + SQS (+DLQ) · RDS PostgreSQL (BD lógica por servicio) + DynamoDB (proyecciones/envíos) · S3+CloudFront · SES+SNS · CloudWatch + X-Ray · Terraform · GitHub Actions → ECR.
+ECS Fargate · API Gateway · **Kafka KRaft** (eventos de dominio) + **RabbitMQ** (tareas de trabajo) · RDS PostgreSQL (esquema por servicio) + DynamoDB (proyecciones/envíos) · S3+CloudFront · SES+SNS · CloudWatch + X-Ray · Terraform · GitHub Actions → ECR.
 
 Costo estimado a plena operación: ~$125–150/mes, con mitigaciones obligatorias de costo.
 
@@ -209,7 +209,7 @@ Diagramas de paisaje, mapeo servicio→recurso, pipeline CI/CD y estrategia loca
 
 ## 13. Pendientes Estratégicos Abiertos (no bloqueantes)
 
-- Definición de país/región del mercado piloto (moneda, idioma, regulación)
+- Definición de país/región del mercado piloto (moneda, idioma, regulación) — **Resuelto por R1** (Cúcuta, Colombia)
 - Análisis regulatorio de billetera prepago (para fase 3+)
 - Modelo de monetización futuro (comisión / suscripción / freemium)
 
@@ -218,7 +218,7 @@ Diagramas de paisaje, mapeo servicio→recurso, pipeline CI/CD y estrategia loca
 ## 14. Próximos Pasos
 
 1. **Refinar épicas en Historias de Usuario con criterios SMART** — inicio sugerido: E4 (Reservas) o E1 (Establecimiento)
-2. Configurar **reglas arquitectónicas del proyecto** (`init_reglas_arquitectonicas`) antes de implementación
+2. Configurar **reglas arquitectónicas del proyecto** (`init-reglas-arquitectonicas`) antes de implementación
 3. Ejecutar **Fase 0 · Fundamentos** (repos, pipeline patrón, Terraform base, entorno local) según ADR-001
 
 ---

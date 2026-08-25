@@ -37,11 +37,11 @@
 | 🟠 **Alta** | Edge (API GW / CloudFront) | Sin AWS WAF, sin throttling/usage plans, sin rate limiting por cliente | Vulnerable a abuso, scraping masivo de catálogos y ataques de costo (financial DoS); SES/SNS pueden quemar presupuesto |
 | 🟠 **Alta** | Supply chain CI/CD | Pipeline solo con tests unit/integración: sin Trivy/scan de imágenes ECR, sin Dependabot/Renovate, sin SAST (CodeQL), sin SBOM | Imágenes vulnerables a producción; CVEs de dependencias sin visibilidad; riesgo reputacional si hay brecha |
 | 🟠 **Alta** | Dimensionamiento Fargate | 0.25 vCPU / 512MB para 7 servicios Java 21 + Spring Boot 3 es insuficiente (overhead JVM + metaspace) | OOMKills recurrentes, reinicios, lentitud de arranque (10–20s) que degrada rolling deploys y escalado reactivo |
-| 🟠 **Alta** | Acoplamiento síncrono RES→STF | `GET slots` REST síncrono sin timeouts/circuit breaker/cache especificados; además API GW depende de JWKS vivo de IAM | STF caído ⇒ reservas caídas (función núcleo); IAM caído ⇒ nadie autentica; fallos en cascada sin aislamiento |
-| 🟡 **Media** | Autoscaling ausente | No se especifican políticas (target tracking, min/max, métricas); NTF worker sin escalado por backlog SQS | Sobre-provisionamiento estático o saturación ante picos; costo fijo innecesario |
+| 🟠 **Alta** | Acoplamiento síncrono reserva→personal | `GET slots` REST síncrono sin timeouts/circuit breaker/cache especificados; además API GW depende de JWKS vivo de identidad | personal caído ⇒ reservas caídas (función núcleo); identidad caído ⇒ nadie autentica; fallos en cascada sin aislamiento |
+| 🟡 **Media** | Autoscaling ausente | No se especifican políticas (target tracking, min/max, métricas); notificacion worker sin escalado por backlog en RabbitMQ | Sobre-provisionamiento estático o saturación ante picos; costo fijo innecesario |
 | 🟡 **Media** | Presupuesto vs realidad | Alarma de alerta ($120) < costo proyectado a plena operación ($125–150) | Alarmas falsas permanentes → fatiga de alerta y pérdida de confianza en el sistema de costos |
 | 🟡 **Media** | Observabilidad operativa | Sin retención de logs definida (crecimiento ilimitado CW), sin sampling X-Ray, sin alarmas de DLQ depth ni síntéticos de flujos E2E | Costos CW fuera de control; DLQs que acumulan eventos perdidos silenciosamente; detección de incidencia reactiva |
-| 🟡 **Media** | Búsqueda geográfica DSC | "Búsqueda por cercanía" sobre DynamoDB no es nativa (requiere geohash/S2 o OpenSearch) | Riesgo de deuda técnica/rediseño en Fase 2; posible sobrecosto no presupuestado |
+| 🟡 **Media** | Búsqueda geográfica descubrimiento | "Búsqueda por cercanía" sobre DynamoDB no es nativa (requiere geohash/S2 o OpenSearch) | Riesgo de deuda técnica/rediseño en Fase 2; posible sobrecosto no presupuestado |
 | ⚪ **Baja** | Región y residencia de datos | Mercado piloto indefinido pero us-east-1 asumido; sin análisis de latencia/residencia regulatoria | Migración de región futura dolorosa (RDS/EBS snapshots entre regiones) |
 | ⚪ **Baja** | Entrega de email | SES sin mencionar salida de sandbox, DKIM/SPF/DMARC | Deliverability pobre → recordatorios no llegan → no-shows (impacta hipótesis central del negocio) |
 | ⚪ **Baja** | GitOps/gates | Deploy por commit directo a `main` sin PR gates documentados (solo aprobación manual a prod) | Sin revisión de código trazable; riesgo de romper main sin control |
@@ -56,13 +56,13 @@
 | 2 | **Control de conexiones** | Pools default por servicio | Pool por servicio ≤ 6 (`hikari.maximumPoolSize`) + alarmas sobre `DatabaseConnections` al 75%; evaluar RDS Proxy cuando haya presupuesto | Prevención de caídas por agotamiento de conexiones | Bajo |
 | 3 | **Edge security** | API GW abierto tras JWT, sin WAF | WAF managed rules (Core + KnownBadInputs) en CloudFront + throttling en API GW (rate/burst) + usage plans | Previene abuso, scraping y ataques de costo | Medio |
 | 4 | **Supply chain CI/CD** | Tests únicamente | Reusable workflow con: OIDC federation (cero claves AWS estáticas), Trivy scan (fail CRITICAL/HIGH), SBOM, Dependabot, PR como unidad de despliegue | Bloquea vulnerabilidades antes de ECR; elimina el secreto más grande del stack (claves de larga vida) | Medio |
-| 5 | **Right-sizing Fargate** | 0.25 vCPU / 512MB todos | APIs: 0.5 vCPU / 1GB con JVM container-aware (`-XX:MaxRAMPercentage=75`); NTF Go: 0.25/512 OK. Validar con load test en Fase 0 | Estabilidad de deploys, cero OOMKills, latencia p99 predecible | Bajo |
-| 6 | **Patrones de resiliencia** | REST síncrono plano | Resilience4j: timeout 2s + circuit breaker + fallback cacheado en RES→STF; JWKS de IAM servido vía CloudFront (cacheable) para que API GW tolere micro-caídas de IAM | Aislamiento de fallos; reservas degradadas ≠ caídas | Medio |
-| 7 | **Autoscaling explícito** | No especificado | Target tracking CPU 60% (min 1/max 4 por API); NTF: scaling por `ApproximateNumberOfMessagesVisible`; schedules ya existentes para dev | Elástico real: rendimiento bajo demanda + costo optimizado | Bajo |
+| 5 | **Right-sizing Fargate** | 0.25 vCPU / 512MB todos | APIs: 0.5 vCPU / 1GB con JVM container-aware (`-XX:MaxRAMPercentage=75`); notificacion Go: 0.25/512 OK. Validar con load test en Fase 0 | Estabilidad de deploys, cero OOMKills, latencia p99 predecible | Bajo |
+| 6 | **Patrones de resiliencia** | REST síncrono plano | Resilience4j: timeout 2s + circuit breaker + fallback cacheado en reserva→personal; JWKS de identidad servido vía CloudFront (cacheable) para que API GW tolere micro-caídas de identidad | Aislamiento de fallos; reservas degradadas ≠ caídas | Medio |
+| 7 | **Autoscaling explícito** | No especificado | Target tracking CPU 60% (min 1/max 4 por API); notificacion: scaling por `ApproximateNumberOfMessagesVisible`; schedules ya existentes para dev | Elástico real: rendimiento bajo demanda + costo optimizado | Bajo |
 | 8 | **Observabilidad accionable** | CW + X-Ray genéricos | Retención logs 30d dev / 90d prod; sampling rules X-Ray; **alarmas**: DLQ depth > 0, RDS CPU/conexiones, 5xx API GW, latency p95; Canary CW Synthetics del flujo *descubrir→reservar* cada 5 min | MTTR drástico; eventos perdidos en DLQ detectados en minutos, no semanas | Medio |
 | 9 | **Corregir umbrales de presupuesto** | Alerta $120 < operación $125–150 | Forecast-based: aviso $100, alerta $160, action SNS→email+Slack; tags de cost allocation por servicio desde Fase 0 | Señal de costo confiable, atribuible por microservicio | Bajo |
 | 10 | **Contratos verificados** | OpenAPI declarados | Contract testing en pipeline (spectral lint + compatibilidad backward en CI); considerar Pact más adelante | Evita rupturas entre 8 servicios sin pruebas manuales cruzadas | Medio |
-| 11 | **VPC endpoints** | Todo sale por NAT Gateway ($32+datos) | S3 Gateway Endpoint (gratis, cubre pulls de ECR layers) obligatorio; evaluar interface endpoints (ECR API, SQS, Secrets Manager) según volumen NAT | Ahorro directo en procesamiento de datos NAT + superficie privada | Bajo |
+| 11 | **VPC endpoints** | Todo sale por NAT Gateway ($32+datos) | S3 Gateway Endpoint (gratis, cubre pulls de ECR layers) obligatorio; evaluar interface endpoints (ECR API, Secrets Manager) según volumen NAT | Ahorro directo en procesamiento de datos NAT + superficie privada | Bajo |
 | 12 | **Decisión de región temprana** | us-east-1 implícito | Decidir región del mercado piloto ANTES de Fase 1 (todo lo demás sigue siendo Terraform) | Evita migración costosa; latencia óptima para usuarios LatAm | Bajo |
 
 ---
@@ -216,7 +216,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "21", cache: maven }
-      - run: mvn -B verify                    # unit + integration (Testcontainers/ElasticMQ)
+      - run: mvn -B verify                    # unit + integration (Testcontainers/Kafka+RabbitMQ)
 
   build-scan-push:
     needs: quality-gate
@@ -284,11 +284,12 @@ resource "aws_appautoscaling_policy" "cpu60" {
 }
 
 # Alarmas mínimas de supervivencia
+# RabbitMQ DLQ: monitorear depth vía CloudWatch o custom metric desde worker
 resource "aws_cloudwatch_metric_alarm" "dlq_not_empty" {
   alarm_name          = "dlq-${var.service}-depth"
-  namespace           = "AWS/SQS"
-  metric_name         = "ApproximateNumberOfMessagesVisible"
-  dimensions          = { QueueName = aws_sqs_queue.dlq.name }
+  namespace           = "Custom/RabbitMQ"
+  metric_name         = "DLQMessageCount"
+  dimensions          = { Broker = aws_mq_broker.rabbitmq.id, Queue = "notificacion.dlq" }
   statistic           = "Maximum"
   period              = 300
   evaluation_periods  = 1
@@ -312,24 +313,24 @@ resource "aws_cloudwatch_metric_alarm" "rds_conn_pressure" {
 }
 ```
 
-### 4.5 Aplicación — Resiliencia en RES→STF (Spring Boot 3) *(hallazgo #6)*
+### 4.5 Aplicación — Resiliencia en reserva→personal (Spring Boot 3) *(hallazgo #6)*
 
 ```yaml
-# application.yml del servicio RES
+# application.yml del servicio reserva
 resilience4j:
   timelimiter:
     instances:
-      stf-slots: { timeout-duration: 2s }
+      personal-slots: { timeout-duration: 2s }
   circuitbreaker:
     instances:
-      stf-slots:
+      personal-slots:
         sliding-window-size: 10
         failure-rate-threshold: 50
         wait-duration-in-open-state: 15s
         permitted-number-of-calls-in-half-open-state: 3
   retry:
     instances:
-      stf-slots: { max-attempts: 2, wait-duration: 200ms }
+      personal-slots: { max-attempts: 2, wait-duration: 200ms }
 
 spring:
   datasource:
@@ -347,8 +348,8 @@ spring:
 > | Fase | Nombre | Contenido |
 > |------|--------|-----------|
 > | **F0** | Fundamentos | Repositorios, pipeline patrón CI/CD, Terraform base, entorno local docker-compose, observabilidad mínima |
-> | **F1** | Núcleo reservable | IAM + EST + STF + RES + NTF → flujo *descubrir→reservar→notificar* E2E en AWS |
-> | **F2** | Fidelización | CPN + RSN + DSC → MVP funcional completo |
+> | **F1** | Núcleo reservable | identidad + establecimiento + personal + reserva + notificacion → flujo *descubrir→reservar→notificar* E2E en AWS |
+> | **F2** | Fidelización | fidelizacion + resena + descubrimiento → MVP funcional completo |
 > | **F3** | Endurecimiento | Trazabilidad completa, alarmas, hardening, portal admin |
 
 ### Corto Plazo — Quick Wins / Seguridad inmediata *(antes y durante Fase 0 · Fundamentos)*
@@ -365,18 +366,18 @@ spring:
 
 1. **AWS WAF + throttling** en API GW/CloudFront (§4.2) cuando haya tráfico real que proteger.
 2. **Alarmas de supervivencia completas**: DLQ depth (todas las colas), 5xx API GW, p95 latency, canary sintético E2E *descubrir→reservar* cada 5 min; SNS→email/Slack; definir 2–3 SLOs simples (ej. disponibilidad reserva 99.5%, p95 checkout <800ms).
-3. **Autoscaling formal** (target tracking + backlog-driven para NTF) y validar dimensionamiento con load test k6/Gatling.
-4. **Resilience4j** en toda llamada síncrona interservicio + JWKS de IAM cacheable vía CloudFront.
+3. **Autoscaling formal** (target tracking + backlog-driven para notificacion) y validar dimensionamiento con load test k6/Gatling.
+4. **Resilience4j** en toda llamada síncrona interservicio + JWKS de identidad cacheable vía CloudFront.
 5. **Contract testing** (lint Spectral + compatibilidad backward en CI de cada OpenAPI) y PR gates obligatorios como unidad de despliegue.
-6. **Validación de viabilidad geo-DSC** (geohash/S2 sobre DynamoDB) en diseño de Fase 2 — decidir antes de implementar, no después.
+6. **Validación de viabilidad geo-descubrimiento** (geohash/S2 sobre DynamoDB) en diseño de Fase 2 — decidir antes de implementar, no después.
 
 ### Largo Plazo — Evolución arquitectónica y FinOps *(Fase 3+ / cuando haya adopción)*
 
-1. **Multi-AZ RDS o Aurora Serverless v2 + RDS Proxy** al primer ingreso monetario: separación física por servicio según el plan de migración ya previsto en ADR-003 (prioridad: RES primero, luego EST/STF).
-2. **Progressive delivery**: blue/green con CodeDeploy para ECS (canary 10%) en servicios de escritura (RES/IAM); rollback automático por alarmas.
+1. **Multi-AZ RDS o Aurora Serverless v2 + RDS Proxy** al primer ingreso monetario: separación física por servicio según el plan de migración ya previsto en ADR-003 (prioridad: reserva primero, luego establecimiento/personal).
+2. **Progressive delivery**: blue/green con CodeDeploy para ECS (canary 10%) en servicios de escritura (reserva/identidad); rollback automático por alarmas.
 3. **FinOps maduro**: tags de cost-allocation por servicio, dashboard CUR en QuickSight, revisión trimestral de rightsizing, evaluación Compute Savings Plan si el patrón de uso se estabiliza.
 4. **DR cross-region**: réplicas de lectura RDS + replicación de tablas DynamoDB globales hacia la región secundaria cuando existan SLAs con clientes de pago.
-5. **Hardening continuo**: rotación automática de secretos (Secrets Manager), revisión IAM quarterly (least privilege real por task role), pentest ligero antes de escalar adopción, y ADR-004 documentando la decisión de plataforma de búsqueda si DSC escala.
+5. **Hardening continuo**: rotación automática de secretos (Secrets Manager), revisión IAM quarterly (least privilege real por task role), pentest ligero antes de escalar adopción, y ADR-004 documentando la decisión de plataforma de búsqueda si descubrimiento escala.
 
 ---
 

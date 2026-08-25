@@ -1,6 +1,6 @@
 # ADR-003 — Plataforma Cloud AWS
 
-- **Estado:** ✅ Aceptada
+- **Estado:** ✅ Aceptada (parcialmente superseded — §Mensajería reemplazada por [ADR-008](ADR-008-mensajeria-hibrida-kafka-rabbitmq.md))
 - **Decisores:** Javier Garcia (Product Owner), Onad (Arquitecto de Software)
 - **Fecha:** 2026-08-23
 - **ADR Número:** 003
@@ -45,10 +45,10 @@ Por área de decisión:
 | Área | Decisión | Justificación clave |
 |------|----------|---------------------|
 | **Cómputo** | **ECS Fargate** — un servicio/task definition por microservicio | Contenedores sin gestionar nodos; EKS pospuesto (k8s es otro curso completo); Lambda descartado para workers siempre-on y SSR |
-| **Gateway** | **Amazon API Gateway** con **autorizador JWT** apuntando a IAM como emisor OIDC | Gestiona el rol de gateway sin desplegar nada; elimina el microservicio custom de gateway del conteo original (9 → 8 custom) |
+| **Gateway** | **Amazon API Gateway** con **autorizador JWT** apuntando a identidad como emisor OIDC | Gestiona el rol de gateway sin desplegar nada; elimina el microservicio custom de gateway del conteo original (9 → 8 custom) |
 | **Mensajería** | **EventBridge** (bus) + **colas SQS por consumidor** + **DLQ** obligatoria | Serverless-nativo, filtrado por patrón, DLQs idiomáticas; RabbitMQ self-managed contradice D1 |
 | **Relacional** | **RDS PostgreSQL** (db.t4g.micro) — **una BD lógica por servicio** en instancia compartada inicial; ruta de migración a instancias/Aurora separadas por servicio | Poliglota persistence con costo contenido; separación lógica hoy = separación física mañana |
-| **NoSQL** | **DynamoDB** — proyecciones de DSC y registros de envío de NTF | Caso de uso natural (acceso por clave, sin joins); aprendizaje NoSQL real |
+| **NoSQL** | **DynamoDB** — proyecciones de descubrimiento y registros de envío de notificacion | Caso de uso natural (acceso por clave, sin joins); aprendizaje NoSQL real |
 | **Frontends** | Angular → **S3 + CloudFront**; Next.js SSR → **Fargate + CloudFront** | Todo dentro de AWS para aprender la plataforma completa |
 | **DNS/TLS** | Route 53 + ACM | Estándar |
 | **Envíos** | SES (email) + SNS Mobile Push | Nativos, casi gratis a volumen piloto |

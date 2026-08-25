@@ -4,7 +4,7 @@
 |-------|-------|
 | **Proyecto** | app-barber |
 | **Fecha** | 2026-08-23 |
-| **Versión** | 1.0 |
+| **Versión** | 1.1 |
 | **Estado** | ✅ Vigente — derivada de decisiones aceptadas |
 | **ADRs origen** | [ADR-001](artifacts/ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](artifacts/ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](artifacts/ADR/ADR-003-plataforma-cloud-aws.md) |
 
@@ -36,14 +36,14 @@ graph TD
     NXT -->|HTTPS REST| APIGW
 
     subgraph VPC["VPC · ECS Fargate · 8 microservicios"]
-        IAM["IAM Spring Boot"]
-        EST["EST Establecimientos"]
-        STF["STF Staff y Agendas"]
-        RES["RES Reservas nucleo"]
-        CPN["CPN Cuponera"]
-        RSN["RSN Resenas"]
-        DSC["DSC Descubrimiento CQRS"]
-        NTF["NTF Notificaciones Go worker"]
+        IAM["identidad Spring Boot"]
+        EST["establecimiento Spring Boot"]
+        STF["personal Spring Boot"]
+        RES["reserva ⭐ Spring Boot"]
+        CPN["fidelizacion Spring Boot"]
+        RSN["resena Spring Boot"]
+        DSC["descubrimiento Spring Boot"]
+        NTF["notificacion Go worker"]
     end
 
     APIGW -.->|valida JWT emitido por| IAM
@@ -54,18 +54,18 @@ graph TD
     APIGW --> CPN
     APIGW --> RSN
 
-    subgraph ASYNC["Mensajeria gestionada"]
-        EB{{"EventBridge bus"}}
-        SQS["Colas SQS por consumidor + DLQ"]
+    subgraph ASYNC["Mensajería — Kafka + RabbitMQ (ADR-008)"]
+        KAFKA{{"Kafka KRaft\nreserva.events\nestablecimiento.events\nresena.events"}}
+        RABBIT{{"RabbitMQ\nnotificacion.emails\nnotificacion.push\n(DLQ)"}}
     end
 
-    RES -->|publica eventos dominio| EB
-    EST -.->|NegocioPublicado| EB
-    EB --> SQS
-    SQS -->|consume| CPN
-    SQS -->|consume| RSN
-    SQS -->|construye proyecciones| DSC
-    SQS -->|consume| NTF
+    RES -->|publica eventos dominio| KAFKA
+    EST -.->|NegocioPublicado| KAFKA
+    KAFKA -->|consume| CPN
+    KAFKA -->|consume| RSN
+    KAFKA -->|construye proyecciones| DSC
+    KAFKA -->|consume → traduce| NTF
+    NTF -->|publica tareas| RABBIT
 
     subgraph DATOS["Persistencia"]
         RDS[("RDS PostgreSQL · BD logica por servicio")]
@@ -73,7 +73,10 @@ graph TD
     end
 
     EST -.-> RDS
+    STF -.-> RDS
     RES -.-> RDS
+    CPN -.-> RDS
+    RSN -.-> RDS
     DSC -.-> DDB
     NTF -.-> DDB
 
@@ -113,7 +116,7 @@ graph TD
     class EST,STF,CPN,RSN,DSC svc
     class RES nucleo
     class NTF goSvc
-    class EB,SQS,RDS,DDB async
+    class KAFKA,RABBIT,RDS,DDB async
     class DATOS datos
     class SES,PUSH salida
     class GHA,ECR,CW,XR ops
@@ -125,14 +128,14 @@ graph TD
 
 | Servicio | Tecnología (ADR-002) | Cómputo | Integración | Persistencia |
 |----------|---------------------|---------|-------------|--------------|
-| IAM | Java · Spring Boot | Fargate service | Emisor OIDC para autorizador de API GW | RDS · bd `iam` |
-| EST | Java · Spring Boot | Fargate service | Detrás de API GW | RDS · bd `establecimientos` |
-| STF | Java · Spring Boot | Fargate service | Detrás de API GW | RDS · bd `staff` |
-| RES ⭐ | Java · Spring Boot | Fargate service | Detrás de API GW · publica a EventBridge (patrón outbox) | RDS · bd `reservas` |
-| CPN | Java · Spring Boot | Fargate service | Cola SQS `cpn-citas-completadas` | RDS · bd `cuponera` |
-| RSN | Java · Spring Boot | Fargate service | Cola SQS `rsn-citas-completadas` | RDS · bd `resenas` |
-| DSC | Java · Spring Boot | Fargate service | API GW lectura · colas SQS para proyecciones | DynamoDB tabla proyecciones |
-| NTF | **Go** | Fargate worker (sin inbound) | Colas SQS de eventos | DynamoDB envíos |
+| identidad | Java · Spring Boot | Fargate service | Emisor OIDC para autorizador de API GW | RDS · esquema `identidad` |
+| establecimiento | Java · Spring Boot | Fargate service | Detrás de API GW | RDS · esquema `establecimiento` |
+| personal | Java · Spring Boot | Fargate service | Detrás de API GW | RDS · esquema `personal` |
+| reserva ⭐ | Java · Spring Boot | Fargate service | Detrás de API GW · publica a Kafka `reserva.events` (patrón outbox) | RDS · esquema `reserva` |
+| fidelizacion | Java · Spring Boot | Fargate service | Consume Kafka `reserva.events` (group: fidelizacion-group) | RDS · esquema `fidelizacion` |
+| resena | Java · Spring Boot | Fargate service | Consume Kafka `reserva.events` (group: resena-group) | RDS · esquema `resena` |
+| descubrimiento | Java · Spring Boot | Fargate service | API GW lectura · consume Kafka para proyecciones | DynamoDB tabla proyecciones |
+| notificacion | **Go** | Fargate worker (sin inbound) | Consume Kafka → publica tareas a RabbitMQ | DynamoDB envíos |
 | Front Cliente | Next.js | Fargate + CloudFront | Consumo API GW | — |
 | Portal Negocio | Angular SPA | S3 + CloudFront | Consumo API GW | — |
 
@@ -169,8 +172,8 @@ Convenciones:
 
 | Aspecto | Estrategia |
 |---------|-----------|
-| Servicios Java | Ejecución local directa + docker-compose con PostgreSQL (script crea las BDs lógicas) |
-| Mensajería | Puerto de mensajería en código con dos adaptadores: in-memory (tests) y SQS; ElasticMQ para integración local |
+| Servicios Java | Ejecución local directa + docker-compose con PostgreSQL (script crea los esquemas por servicio) |
+| Mensajería | Kafka KRaft + RabbitMQ en docker-compose (ADR-008); adaptadores con dos implementaciones: in-memory (tests) y productores/consumidores reales |
 | Frontends | `npm run dev` estándar apuntando a servicios locales o al ambiente dev en AWS |
 | Regla | Lo que corre en local debe correr igual en AWS — la IaC es la única diferencia de entorno |
 
