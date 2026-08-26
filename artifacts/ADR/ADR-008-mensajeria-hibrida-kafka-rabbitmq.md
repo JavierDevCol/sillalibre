@@ -190,7 +190,7 @@ sequenceDiagram
 ```yaml
 services:
   kafka:
-    image: confluentinc/cp-kafka:7.6.0
+    image: confluentinc/cp-kafka:8.3.1
     container_name: sillalibre-kafka
     environment:
       KAFKA_NODE_ID: 1
@@ -327,8 +327,9 @@ graph LR
 
 ## Próximos Pasos
 
-1. Actualizar ADR-003 con la nueva estrategia de mensajería
-2. Actualizar ADR-006 con patrones de tolerancia a fallos para Kafka y RabbitMQ
+> ~~1. Actualizar ADR-003 con la nueva estrategia de mensajería~~ ✅ Completado
+> ~~2. Actualizar ADR-006 con patrones de tolerancia a fallos para Kafka y RabbitMQ~~ ✅ Completado
+
 3. Crear docker-compose.local con Kafka KRaft + RabbitMQ + Kafka UI
 4. Implementar servicio patrón notificacion como bridge Kafka→RabbitMQ en Fase 1
 

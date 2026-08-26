@@ -1,6 +1,6 @@
 # ADR-003 — Plataforma Cloud AWS
 
-- **Estado:** ✅ Aceptada (parcialmente superseded — §Mensajería reemplazada por [ADR-008](ADR-008-mensajeria-hibrida-kafka-rabbitmq.md))
+- **Estado:** ✅ Aceptada — §Mensajería superseded por [ADR-008](ADR-008-mensajeria-hibrida-kafka-rabbitmq.md) (Kafka+RabbitMQ reemplaza EventBridge+SQS). Resto de decisiones vigentes.
 - **Decisores:** Javier Garcia (Product Owner), Onad (Arquitecto de Software)
 - **Fecha:** 2026-08-23
 - **ADR Número:** 003
@@ -32,7 +32,7 @@ Por área de decisión:
 |------|----------|----------|----------|
 | Cómputo | **ECS Fargate** | EKS (Kubernetes) | Lambda |
 | Gateway | **Amazon API Gateway** | ALB público directo | Gateway custom (KrakenD/NestJS) |
-| Mensajería | **EventBridge + SQS** | Amazon MQ (RabbitMQ) | SNS directo |
+| Mensajería | EventBridge + SQS | Amazon MQ (RabbitMQ) | SNS directo |
 | Datos relacionales | **RDS PostgreSQL** | Aurora Serverless v2 | Instancia EC2 self-managed |
 | IaC | **Terraform** | AWS CDK | Consola + CloudFormation |
 
@@ -46,7 +46,7 @@ Por área de decisión:
 |------|----------|---------------------|
 | **Cómputo** | **ECS Fargate** — un servicio/task definition por microservicio | Contenedores sin gestionar nodos; EKS pospuesto (k8s es otro curso completo); Lambda descartado para workers siempre-on y SSR |
 | **Gateway** | **Amazon API Gateway** con **autorizador JWT** apuntando a identidad como emisor OIDC | Gestiona el rol de gateway sin desplegar nada; elimina el microservicio custom de gateway del conteo original (9 → 8 custom) |
-| **Mensajería** | **EventBridge** (bus) + **colas SQS por consumidor** + **DLQ** obligatoria | Serverless-nativo, filtrado por patrón, DLQs idiomáticas; RabbitMQ self-managed contradice D1 |
+| **Mensajería** | ~~EventBridge + SQS~~ → **Kafka KRaft + RabbitMQ** ([ADR-008](ADR-008-mensajeria-hibrida-kafka-rabbitmq.md)) | *Superseded:* EventBridge+SQS era la decisión original; ADR-008 la reemplazó por Kafka (event streaming transferible) + RabbitMQ (task queues) — driver formativo D1 de ADR-001 |
 | **Relacional** | **RDS PostgreSQL** (db.t4g.micro) — **una BD lógica por servicio** en instancia compartada inicial; ruta de migración a instancias/Aurora separadas por servicio | Poliglota persistence con costo contenido; separación lógica hoy = separación física mañana |
 | **NoSQL** | **DynamoDB** — proyecciones de descubrimiento y registros de envío de notificacion | Caso de uso natural (acceso por clave, sin joins); aprendizaje NoSQL real |
 | **Frontends** | Angular → **S3 + CloudFront**; Next.js SSR → **Fargate + CloudFront** | Todo dentro de AWS para aprender la plataforma completa |
@@ -84,7 +84,7 @@ Por área de decisión:
 | NAT Gateway | $32 + datos |
 | RDS PostgreSQL db.t4g.micro | $13–15 |
 | DynamoDB on-demand | $0–2 |
-| EventBridge + SQS | $0–2 |
+| ~~EventBridge + SQS~~ → **Kafka + RabbitMQ** ([ADR-008](ADR-008-mensajeria-hibrida-kafka-rabbitmq.md)) | $2–4 |
 | CloudFront + S3 + Route 53 | $3–5 |
 | CloudWatch + X-Ray | $5–10 |
 | SES + SNS | $0–1 |
@@ -134,11 +134,14 @@ Ver documento vivo de arquitectura: [`arquitectura_aws.md`](../../../arquitectur
 - ✅ Bueno, porque replica el estándar AMQP de la industria
 - ❌ Malo, porque introduce una instancia que parchear, monitorear y dimensionar (contra D1)
 
-### EventBridge + SQS *(elegido)*
+### EventBridge + SQS *(~~elegido~~ → superseded por ADR-008)*
+
+> **⚠️ Decisión reemplazada:** ADR-008 reemplazó EventBridge+SQS por Kafka KRaft (event streaming) + RabbitMQ (task queues). Ver [ADR-008](ADR-008-mensajeria-hibrida-kafka-rabbitmq.md) para la decisión vigente.
 
 - ✅ Bueno, porque cero infraestructura: filtrado, fan-out y DLQ gestionados
 - ✅ Bueno, porque enseña arquitectura event-driven moderna AWS-native
 - ❌ Malo, porque ata la semántica de eventos al ecosistema AWS (mitigado por puerto de mensajería en código)
+- ❌ Malo, porque no enseña Kafka, el estándar de facto industrial para event streaming (driver formativo D1)
 
 ---
 
@@ -153,6 +156,7 @@ Ver documento vivo de arquitectura: [`arquitectura_aws.md`](../../../arquitectur
 
 - [ADR-001 — Adopción de Microservicios](ADR-001-adopcion-microservicios.md)
 - [ADR-002 — Stack Poliglota Acotado](ADR-002-stack-poliglota-acotado.md)
+- [ADR-008 — Mensajería Híbrida Kafka+RabbitMQ](ADR-008-mensajeria-hibrida-kafka-rabbitmq.md) *(reemplaza la decisión de mensajería de este ADR)*
 
 ---
 

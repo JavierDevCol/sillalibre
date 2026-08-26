@@ -9,7 +9,7 @@
 
 ## Contexto y Problema
 
-Cada microservicio del backend en Java (ADR-002) carece de convención interna sobre cómo estructurar su código. Sin estándar, la自查 y la inspectibilidad entre servicios colapsan — cada uno se convierte en un micro-monolito opaco con su propio estilo. El equipo necesita una convención de arquitectura interna que:
+Cada microservicio del backend en Java (ADR-002) carece de convención interna sobre cómo estructurar su código. Sin estándar, la auto-inspección y la inspectibilidad entre servicios colapsan — cada uno se convierte en un micro-monolito opaco con su propio estilo. El equipo necesita una convención de arquitectura interna que:
 
 1. Sea ampliamente usada en la industria (transferible)
 2. Permita probar lógica de negocio sin levantar Spring ni bases de datos
@@ -129,7 +129,7 @@ public class KafkaReservaPublisher implements EventoReservaPort {
 
 ### Positivas
 
-- La自查 y la inspectibilidad se igualan entre servicios — cualquier dev reconoce la estructura inmediatamente
+- La auto-inspección y la inspectibilidad se igualan entre servicios — cualquier dev reconoce la estructura inmediatamente
 - El dominio se testea con unit tests puros (sin mocks de repositorios) en minutos
 - Los adaptadores se reemplazan sin tocar la lógica de negocio (JPA → DynamoDB, REST → gRPC)
 - El patrón es ampliamente reconocido en Java (transferible a cualquier proyecto Spring posterior)

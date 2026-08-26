@@ -76,9 +76,11 @@ HikariCP Pool por servicio:
 └── maxLifetime = 1800000ms
 ```
 
-**Total: 6 servicios × 6 conexiones = 36 conexiones** (con margen en el límite de 200 del db.t4g.micro).
+**Total: 6 servicios × 6 conexiones = 36 conexiones** (con margen amplio en el límite de 200 del db.t4g.micro endurecido — ver ADR-003 y [auditoría WAF §4.1](../auditoria_well_architected.md)).
 
-### Flujo de una consulta跨servicio
+> **Nota sobre la auditoría WAF:** el hallazgo de "80 conexiones" de la auditoría asume pools HikariCP **default** (10 por servicio, pre-configuración). Con la configuración de pool=6 definida en este ADR, el total real es 36 conexiones — dentro del margen seguro.
+
+### Flujo de una consulta entre servicios
 
 ```
 reserva → (REST API) → personal

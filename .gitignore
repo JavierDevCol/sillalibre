@@ -6,8 +6,7 @@
 # --- Interno del workspace (decisión PO 2026-08-23: no versionar) ---
 .SAC/
 prompts/
-.opencode/
-opencode.json
+*/node_modules/
 
 # --- SO / Editor ---
 .DS_Store
