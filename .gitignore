@@ -5,6 +5,7 @@
 
 # --- Interno del workspace (decisión PO 2026-08-23: no versionar) ---
 .SAC/
+.opencode/
 prompts/
 */node_modules/
 
