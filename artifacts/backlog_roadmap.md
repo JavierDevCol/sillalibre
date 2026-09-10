@@ -3,8 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Proyecto** | SillaLibre *(codename técnico: app-barber)* |
-| **Fecha** | 2026-08-23 |
-| **Versión** | 1.1 |
+| **Fecha** | 2026-09-02 |
+| **Versión** | 1.2 |
 | **Estado** | ✅ Vigente — backlog nivel épica + marco de ejecución (cadencia, capacidad, ceremonias) definido |
 | **Elaborado por** | Product Owner Agent (`planificar_proyecto`) |
 | **Fuentes** | [`vision_producto.md`](vision_producto.md) v2.0 · [ADR-001](ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](ADR/ADR-003-plataforma-cloud-aws.md) · [`../arquitectura_aws.md`](../arquitectura_aws.md) v1.0 · [`auditoria_well_architected.md`](auditoria_well_architected.md) v1.0 |
@@ -105,22 +105,26 @@ Extraídos de: ADR-001 §Guardarrails (Fase 0), criterios de validación de ADR-
 | **ENA-0-07** | 🆕 Reglas arquitectónicas del proyecto | Ejecutar cuestionario `init-reglas-arquitectonicas` → genera `artifacts/reglas_arquitectonicas.md`: nomenclatura de código, arquitectura interna por servicio (**hexagonal ligera / ports & adapters** como base común), patrones aprobados por servicio, pirámide de testing, manejo de secretos, DoD técnico | Documento publicado y referenciado desde este backlog; todo PR posterior se evalúa contra él | Solicitado por PO · Visión §14.2 |
 | **ENA-0-08** | 🆕 Estándares de ingeniería y convenciones | Convención **trunk-based con PR gates** (corrige hallazgo de deploys directos a main): nombres de rama `feat|fix/HU-<id>-slug`, conventional commits, template de PR con checklist de CAs, **revisión cruzada obligatoria** (equipo de 2), ambientes = workspaces Terraform (`dev`/`prod`), versión de imagen = SHA de commit (rollback = redeploy del tag anterior), estrategia rolling + criterios de rollback | Documento de convenciones publicado (puede vivir dentro de `reglas_arquitectonicas.md` §DevOps); primer PR real cumple el flujo completo rama→PR→review→merge→deploy | Solicitado por PO · Auditoría QW (gates) |
 | **ENA-0-09** | 🆕 Scaffold base de los 8 microservicios | Esqueleto **template-driven** por servicio: estructura hexagonal (dominio/application/adapters), patrones candidatos declarados — **Outbox transaccional** (reserva), **CQRS read-model** (descubrimiento), **consumidor Kafka idempotente** (fidelizacion, resena), **bridge Kafka→RabbitMQ** (notificacion), **emisor OIDC/JWT** (identidad) — Dockerfile multi-stage (JRE 21 / Go), healthchecks actuator, logs JSON estructurados, X-Ray SDK cableado, stub OpenAPI, wiring al pipeline reutilizable | **Muestreo por representatividad:** despliegan en dev con `/health` OK el patrón Spring + notificacion (Go); los 8 restantes compilan, pasan CI y quedan listos para activación (evita pagar 8 tareas Fargate vacías — guardarrail FinOps) | Solicitado por PO · ADR-001 F0 · ADR-008 |
+| **ENA-0-10** | 🆕 Métricas de cobertura de tests | JaCoCo (Java) + cobertura Go nativa integrados al pipeline CI con **fail-gate ≥80%** en lógica de negocio. Reporte de cobertura visible en PR (HTML o comment) | El pipeline rechaza un PR si la cobertura de lógica de negocio cae por debajo del 80%; reporte visible en el PR | Blueprint §6 Gap #7 · Visión §15.5 |
+| **ENA-0-11** | 🆕 Spike: Cumplimiento Ley 1581 de 2012 | Investigar requisitos de protección de datos personales Colombia aplicables al proyecto: consentimiento, derechos ARCO, aviso de privacidad, registro ante SIC. **Timebox: 8h máximo** | Documento `artifacts/compliance/Ley1581-checklist.md` publicado con requisitos mapeados a servicios y decisiones de diseño técnicas | Blueprint §6 Gap #8 · Visión §15.2 |
 
 ### Orden de ejecución interno del Sprint 0
 
 ```
-Semana 1:  ENA-0-07 (reglas) ─┬─→ ENA-0-08 (convenciones)     [paralelizables]
-           ENA-0-01 (FinOps) ─┘
-Semana 2+: ENA-0-02 (Terraform) → ENA-0-03 (pipeline) → ENA-0-04 (patrón observado)
+Semana 1:  ENA-0-11 (spike Ley 1581) + ENA-0-01 (FinOps) + ENA-0-07 (reglas) + ENA-0-08 (convenciones)
+           [ENA-0-11 y ENA-0-07/08 paralelizables; spike tiene timebox 8h]
+Semana 2+: ENA-0-02 (Terraform) → ENA-0-03 (pipeline) → ENA-0-10 (cobertura) → ENA-0-04 (patrón observado)
            ENA-0-05 (local) y ENA-0-06 (OpenAPI) en paralelo al avance de plataforma
-Cierre:    ENA-0-09 (scaffold) ← requiere 03, 04, 07 y 08 estables
+Cierre:    ENA-0-09 (scaffold) ← requiere 03, 04, 07, 08 y 10 estables
 ```
 
 ### Definition of Done del Sprint 0
 
-Plataforma completa levantable/destruible/restaurable con Terraform + 2 imágenes representativas (Java y Go) desplegadas E2E con tracing visible + gobernanza publicada + 8 esqueletos compilando en CI.
+Plataforma completa levantable/destruible/restaurable con Terraform + 2 imágenes representativas (Java y Go) desplegadas E2E con tracing visible + gobernanza publicada + 8 esqueletos compilando en CI + **cobertura ≥80% en CI** + **checklist Ley 1581 publicado**.
 
-> **Nota de capacidad (medida, §2.1):** 9 enablers ≈ 60–90 h frente a una capacidad de 12–20 h por iteración. Por eso el Sprint 0 se ejecuta en **4 semanas (S0-A + S0-B)** con contingencia **S0-C** según calendario de §2.2. La Regla de parada (ADR-001) prohíbe iniciar Sprint 1 sin este DoD completo.
+> **Nota de capacidad (medida, §2.1):** 11 enablers ≈ 70–100 h frente a una capacidad de 12–20 h por iteración. Por eso el Sprint 0 se ejecuta en **4 semanas (S0-A + S0-B)** con contingencia **S0-C** según calendario de §2.2. La Regla de parada (ADR-001) prohíbe iniciar Sprint 1 sin este DoD completo.
+
+> **Dependencia condicional:** ENA-0-11 (spike Ley 1581) puede generar cambios en HU-identidad-01 o nuevas HUs de privacidad. Gate: resultado del spike debe estar disponible antes del planning de S1.
 
 ---
 

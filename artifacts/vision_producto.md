@@ -3,13 +3,13 @@
 | Campo | Valor |
 |-------|-------|
 | **Proyecto** | app-barber |
-| **Fecha** | 2026-08-23 |
-| **Versión** | 2.1 |
-| **Estado** | ✅ Vigente — análisis de negocio consolidado + decisiones arquitectónicas formalizadas (ADRs) |
+| **Fecha** | 2026-09-02 |
+| **Versión** | 2.2 |
+| **Estado** | ✅ Vigente — análisis de negocio consolidado + decisiones arquitectónicas formalizadas (ADRs) + atributos de calidad |
 | **Documentos derivados** | [ADR-001](ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](ADR/ADR-003-plataforma-cloud-aws.md) · [`arquitectura_aws.md`](../arquitectura_aws.md) |
 | **Elaborado por** | Onad — Arquitecto de Software |
 
-> **Historial:** v0.1 = análisis inicial con recomendación de Monolito Modular (superseda por activación del objetivo formativo). v2.0 = integración de la decisión de microservicios sobre AWS. v2.1 = actualización de nombres de servicios a formato descriptivo (identidad, establecimiento, personal, reserva, fidelizacion, resena, descubrimiento, notificacion).
+> **Historial:** v0.1 = análisis inicial con recomendación de Monolito Modular (superseda por activación del objetivo formativo). v2.0 = integración de la decisión de microservicios sobre AWS. v2.1 = actualización de nombres de servicios a formato descriptivo (identidad, establecimiento, personal, reserva, fidelizacion, resena, descubrimiento, notificacion). v2.2 = adición de atributos de calidad (NFRs) con foco en Web responsive para MVP.
 
 ---
 
@@ -220,6 +220,66 @@ Diagramas de paisaje, mapeo servicio→recurso, pipeline CI/CD y estrategia loca
 1. **Refinar épicas en Historias de Usuario con criterios SMART** — inicio sugerido: E4 (Reservas) o E1 (Establecimiento)
 2. Configurar **reglas arquitectónicas del proyecto** (`init-reglas-arquitectonicas`) antes de implementación
 3. Ejecutar **Fase 0 · Fundamentos** (repos, pipeline patrón, Terraform base, entorno local) según ADR-001
+
+---
+
+## 15. Atributos de Calidad (No Funcionales)
+
+### 15.1 Rendimiento
+
+| Atributo | Objetivo | Medición |
+|----------|----------|----------|
+| Usuarios simultáneos | 100-500 (piloto), 1000+ (producción) | Monitoreo CloudWatch |
+| Tiempo de respuesta | <200ms consultas, <500ms reservas | X-Ray tracing |
+| Transacciones por segundo | 50-100 TPS | Métricas API Gateway |
+| Downtime aceptable | 99.9% uptime (~8.7 horas/año) | Health checks |
+
+### 15.2 Seguridad
+
+| Atributo | Implementación |
+|----------|----------------|
+| Datos sensibles | Datos personales,联系方式, historial de citas |
+| Autenticación | JWT/OAuth2 con roles (cliente, barbero, admin) |
+| Autorización | RBAC por rol y establecimiento |
+| Normativas | Ley 1581 de 2012 (Protección de datos Colombia) |
+
+### 15.3 Usabilidad
+
+| Atributo | Nivel |
+|----------|-------|
+| Experiencia usuario | Básico-moderado (usuarios mobile Colombia) |
+| Accesibilidad | WCAG 2.1 nivel A mínimo |
+| Idiomas | Español (Colombia) |
+| **Dispositivos MVP** | **Web responsive** |
+| Dispositivos futuros | ⏸️ Mobile (iOS/Android) — fase 2+ |
+
+### 15.4 Escalabilidad
+
+| Período | Crecimiento esperado | Estrategia |
+|---------|---------------------|------------|
+| 6 meses (piloto) | 3-5 barberías, 200-500 clientes | Vertical + Auto-scaling |
+| 1 año (expansión) | 20-50 barberías, 2000-5000 clientes | Horizontal microservicios |
+| Componentes horizontales | Servicios de dominio (reserva, descubrimiento) | ECS Fargate auto-scaling |
+| Componentes verticales | Bases de datos (RDS) | Upgrade instancia + Read replicas |
+
+### 15.5 Mantenibilidad
+
+| Atributo | Objetivo |
+|----------|----------|
+| Bugfixing | Alta — microservicios independientes |
+| Agregar features | Media-alta — contratos OpenAPI, tests automatizados |
+| Cobertura tests | Mínimo 80% en lógica de negocio |
+| Documentación | OpenAPI por servicio, ADRs, runbooks |
+
+### 15.6 Disponibilidad
+
+| Atributo | Compromiso |
+|----------|------------|
+| SLA piloto | 99.9% |
+| SLA producción | 99.95% |
+| Disaster Recovery | Multi-AZ AWS, backups automáticos |
+| Backups RDS | Diario + snapshots manuales antes de cambios |
+| RTO (Tiempo recuperación) | <1 hora para servicios críticos |
 
 ---
 

@@ -5,7 +5,7 @@
 | **Proyecto** | app-barber |
 | **Fecha** | 2026-08-23 |
 | **Versión** | 1.0 |
-| **Alcance** | Arquitectura documentada (design-time): [`arquitectura_aws.md`](../arquitectura_aws.md) + [ADR-001](ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](ADR/ADR-003-plataforma-cloud-aws.md). No existe aún código IaC/aplicación; los hallazgos se basan en lo especificado en los documentos vigentes. |
+| **Alcance** | Arquitectura documentada (design-time): [`arquitectura_aws.md`](../arquitectura_aws.md) + [ADR-001](ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](ADR/ADR-003-plataforma-cloud-aws.md) · [ADR-004](ADR/ADR-004-arquitectura-interna-hexagonal.md) · [ADR-005](ADR/ADR-005-persistencia-strategy.md) · [ADR-006](ADR/ADR-006-tolerancia-fallos.md) · [ADR-007](ADR/ADR-007-observabilidad.md) · [ADR-008](ADR/ADR-008-mensajeria-hibrida-kafka-rabbitmq.md) · [ADR-009](ADR/ADR-009-devops-y-comunicacion.md). No existe aún código IaC/aplicación; los hallazgos se basan en lo especificado en los documentos vigentes. |
 | **Marco de evaluación** | AWS Well-Architected Framework — 6 pilares |
 | **Estado** | ✅ Vigente — requiere revisión tras ejecutar Fase 0 |
 
@@ -399,6 +399,11 @@ Todos alcanzables dentro de la Fase 0 ya planificada **sin cambiar ninguna decis
 - [ADR-001 — Adopción de Microservicios](ADR/ADR-001-adopcion-microservicios.md)
 - [ADR-002 — Stack Poliglota Acotado](ADR/ADR-002-stack-poliglota-acotado.md)
 - [ADR-003 — Plataforma Cloud AWS](ADR/ADR-003-plataforma-cloud-aws.md)
+- [ADR-004 — Arquitectura Interna Hexagonal](ADR/ADR-004-arquitectura-interna-hexagonal.md)
+- [ADR-005 — Persistencia y Estrategia de Datos](ADR/ADR-005-persistencia-strategy.md)
+- [ADR-006 — Tolerancia a Fallos](ADR/ADR-006-tolerancia-fallos.md)
+- [ADR-007 — Observabilidad Distribuida](ADR/ADR-007-observabilidad.md)
+- [ADR-008 — Mensajería Híbrida Kafka+RabbitMQ](ADR/ADR-008-mensajeria-hibrida-kafka-rabbitmq.md)
 - [`vision_producto.md`](vision_producto.md) — visión del producto y decisiones estratégicas
 
 ---

@@ -3,14 +3,14 @@
 | Campo | Valor |
 |-------|-------|
 | **Proyecto** | SillaLibre (app-barber) |
-| **Fecha** | 2026-08-25 |
-| **Versión** | 1.2 |
-| **Estado** | ✅ Vigente — consolidación y complemento de decisiones arquitectónicas existentes |
-| **ADRs origen** | [ADR-001](ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](ADR/ADR-003-plataforma-cloud-aws.md) · [ADR-004](ADR/ADR-004-arquitectura-interna-hexagonal.md) · [ADR-005](ADR/ADR-005-persistencia-strategy.md) · [ADR-006](ADR/ADR-006-tolerancia-fallos.md) · [ADR-007](ADR/ADR-007-observabilidad.md) · [ADR-008](ADR/ADR-008-mensajeria-hibrida-kafka-rabbitmq.md) |
+| **Fecha** | 2026-09-02 |
+| **Versión** | 1.4 |
+| **Estado** | ✅ Vigente — consolidación y complemento de decisiones arquitectónicas existentes + sincronización NFRs v2.2 |
+| **ADRs origen** | [ADR-001](ADR/ADR-001-adopcion-microservicios.md) · [ADR-002](ADR/ADR-002-stack-poliglota-acotado.md) · [ADR-003](ADR/ADR-003-plataforma-cloud-aws.md) · [ADR-004](ADR/ADR-004-arquitectura-interna-hexagonal.md) · [ADR-005](ADR/ADR-005-persistencia-strategy.md) · [ADR-006](ADR/ADR-006-tolerancia-fallos.md) · [ADR-007](ADR/ADR-007-observabilidad.md) · [ADR-008](ADR/ADR-008-mensajeria-hibrida-kafka-rabbitmq.md) · [ADR-009](ADR/ADR-009-devops-y-comunicacion.md) |
 | **Documentos derivados** | [`vision_producto.md`](vision_producto.md) · [`backlog_roadmap.md`](backlog_roadmap.md) · [`auditoria_well_architected.md`](auditoria_well_architected.md) · [`arquitectura_aws.md`](../arquitectura_aws.md) |
 | **Elaborado por** | Onad — Arquitecto de Software |
 
-> **Propósito:** Este Blueprint consolida, valida y complementa las decisiones arquitectónicas ya documentadas en los ADRs 001–007, identificando gaps, proporcionando el layout concreto de implementación y proponiendo próximos pasos para Sprint 0.
+> **Propósito:** Este Blueprint consolida, valida y complementa las decisiones arquitectónicas ya documentadas en los ADRs 001–009, identificando gaps, proporcionando el layout concreto de implementación y proponiendo próximos pasos para Sprint 0.
 
 ---
 
@@ -19,7 +19,7 @@
 ### Tipo de Sistema Identificado
 **Microservicios Event-Driven sobre AWS** — Marketplace bilateral con 8 servicios custom (7 dominio + identidad), comunicación síncrona REST para consultas y eventos asíncronos via **Kafka KRaft** (eventos de dominio) + **RabbitMQ** (tareas de trabajo) para propagación de estado — [ADR-008](ADR/ADR-008-mensajeria-hibrida-kafka-rabbitmq.md).
 
-### Atributos Priorizados (orden de impacto)
+### Atributos Priorizados (orden de impacto) — actualizado v1.3
 
 | Atributo | Prioridad | Justificación |
 |----------|-----------|---------------|
@@ -29,18 +29,22 @@
 | **Resiliencia** | 🟠 Alta | SPOF identificado en RDS compartida; reserva→personal acoplamiento síncrono sin patrones de tolerancia |
 | **Escalabilidad** | 🟡 Media | Piloto con 3–5 negocios; escalabilidad real es futura, no actual |
 | **Seguridad** | 🟡 Media | JWT/API Gateway cubre auth; WAF y supply chain son mejoras mediano plazo |
+| **Cumplimiento Legal** | 🟡 Media | Ley 1581 de 2012 (Colombia) — protección de datos personales |
 | **Latencia** | ⚪ Baja | Mercado local Cúcuta (us-east-1); latencia ~60–80ms es aceptable |
 
-### NFRs Cuantificados (derivados de la auditoría WAF)
+### NFRs Cuantificados (derivados de la auditoría WAF + vision_producto v2.2)
 
 | NFR | Meta | Estado Actual |
 |-----|------|---------------|
-| Disponibilidad servicio reserva | ≥ 99.5% | No definido |
+| Disponibilidad servicio reserva | ≥ 99.5% (piloto), 99.95% (producción) | No definido |
 | p95 latencia API | < 800ms | No medido |
 | RPO (pérdida datos) | ≤ 5 min | No configurado (sin PITR activo) |
-| RTO (recuperación) | ≤ 30 min | No probado |
-| Conexiones RDS por servicio | ≤ 6 (HikariCP) | Default (10) — violación probable |
+| RTO (recuperación) | ≤ 30 min (críticos), < 1h (resto) | No probado |
+| Conexiones RDS por servicio | ≤ 6 (HikariCP) | Configurado (ADR-005: pool=6) |
 | Retención logs | 30d dev / 90d prod | No definido |
+| **Cobertura tests** | **≥ 80% lógica de negocio** | **No medido** |
+| **Cumplimiento legal** | **Ley 1581 de 2012 (Colombia)** | **No auditado** |
+| **Dispositivos MVP** | **Web responsive únicamente** | **Definido** |
 
 ---
 
@@ -402,7 +406,7 @@ app-barber/                          # Raíz del monorepo
 │   │   ├── rds/                      # PostgreSQL + parameter groups
 │   │   ├── dynamodb/                 # Tablas para proyecciones/envíos
 │   │   ├── eventbridge/              # Bus + reglas
-│   │   ├── sqs/                      # Colas + DLQ por consumidor
+│   │   ├── rabbitmq/                  # Colas + DLQ por consumidor (ADR-008)
 │   │   ├── apigateway/               # REST API + autorizador JWT
 │   │   ├── cdn/                      # CloudFront + S3 + Route 53
 │   │   ├── monitoring/               # CloudWatch alarmas + X-Ray
@@ -494,7 +498,7 @@ services/notificacion/
 │   │   └── repository.go            # EnvioRepository interface
 │   ├── adapters/
 │   │   ├── kafka/               # Consumidor Kafka (event streaming)
-│   │   │   ├── rabbitmq/            # Productor RabbitMQ (tareas: email, push)
+│   │   ├── rabbitmq/            # Productor RabbitMQ (tareas: email, push)
 │   │   ├── ses/                     # Implementación SES email
 │   │   ├── sns/                     # Implementación SNS push
 │   │   └── dynamo/                  # Implementación DynamoDB
@@ -571,13 +575,15 @@ ejemplo: reserva:1.2.3
 ## 6. Gaps Críticos a Resolver en Sprint 0
 
 | # | Gap | Hallazgo Auditoría WAF | Enabler Asociado | Acción |
-|---|-----|------------------------|-------------------|--------|
+|---|-----|------------------------|------------------|--------|
 | 1 | **RDS compartida sin endurecer** | 🔴 SPOF de plataforma completa | ENA-0-02 | Parameter group `max_connections=200`, backups 7d, PITR, `deletion_protection` |
 | 2 | **Dimensionamiento JVM insuficiente** | 🟠 OOMKills en 512MB | ENA-0-04 | Subir a 0.5 vCPU / 1GB con `-XX:MaxRAMPercentage=75` |
 | 3 | **Sin pipeline de seguridad** | 🟠 Supply chain vulnerable | ENA-0-03 | OIDC + Trivy + SBOM + Dependabot |
 | 4 | **Sin reglas arquitectónicas** | ⚪ Documento pendiente | ENA-0-07 | Ejecutar `init-reglas-arquitectonicas` |
 | 5 | **Sin convenciones de ingeniería** | ⚪ PR gates no documentados | ENA-0-08 | Trunk-based + conventional commits + template PR |
 | 6 | **Código vacío** | ⚪ Solo `.gitkeep` en carpetas | ENA-0-09 | Scaffold de servicios (template-driven) |
+| 7 | **Sin métricas de cobertura** | ⚪ Tests sin跟踪 | ENA-0-10 | Configurar JaCoCo + SonarQube (local) para ≥80% cobertura |
+| 8 | **Cumplimiento legal no auditado** | ⚪ Ley 1581 de 2012 sin revisar | ENA-0-11 | Revisar requisitos de protección datos personales Colombia |
 
 ---
 
@@ -585,14 +591,16 @@ ejemplo: reserva:1.2.3
 
 | Criterio | Estado |
 |----------|--------|
-| NFRs extraídos y cuantificados | ✅ |
+| NFRs extraídos y cuantificados | ✅ (actualizado v2.2) |
 | Estilo arquitectónico justificado y validado | ✅ (ADR-001) |
 | Diagrama de comunicación completo | ✅ (Mermaid) |
 | Layout de directorios concreto y detallado | ✅ |
 | Convenciones de Git y commits definidas | ✅ |
-| ADRs complementarios emitidos | ✅ (ADR-004–007) |
-| Gaps críticos identificados con acción | ✅ |
+| ADRs complementarios emitidos | ✅ (ADR-004–008) |
+| Gaps críticos identificados con acción | ✅ (8 gaps, incluye tests y legal) |
 | Trade-offs documentados | ✅ |
+| **Cobertura tests ≥80% definida** | ✅ (nuevo) |
+| **Cumplimiento Ley 1581 identificado** | ✅ (nuevo) |
 
 ---
 
