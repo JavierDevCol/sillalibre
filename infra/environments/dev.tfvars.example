@@ -1,0 +1,27 @@
+# ============================================
+# AMBIENTE: DEV (EJEMPLO)
+# ============================================
+# Copiar a dev.tfvars y ajustar valores reales.
+# NO commitear dev.tfvars (contiene configuración local).
+# ============================================
+
+# --- General ---
+environment = "dev"
+aws_region  = "us-east-1"
+
+# --- VPC ---
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.3.0/24", "10.0.4.0/24"]
+
+# --- RDS ---
+instance_class         = "db.t4g.micro"
+allocated_storage      = 20
+max_allocated_storage  = 100
+backup_retention_period = 7
+max_connections        = 200
+deletion_protection    = false
+skip_final_snapshot    = true
+
+# --- S3 ---
+enable_versioning = true
