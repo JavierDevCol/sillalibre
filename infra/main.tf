@@ -73,7 +73,44 @@ module "kms" {
   enable_key_rotation = true
 }
 
-# Módulos siguientes se descomentan según fase:
-# module "vpc" { ... }
-# module "rds" { ... }
-# module "s3" { ... }
+module "vpc" {
+  source = "./modules/vpc"
+
+  vpc_cidr             = var.vpc_cidr
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  environment          = var.environment
+  project_name         = var.project_name
+}
+
+module "rds" {
+  source = "./modules/rds"
+
+  environment          = var.environment
+  project_name         = var.project_name
+  instance_class       = var.instance_class
+  allocated_storage    = var.allocated_storage
+  max_allocated_storage = var.max_allocated_storage
+  backup_retention_period = var.backup_retention_period
+  max_connections      = var.max_connections
+  deletion_protection  = var.deletion_protection
+  skip_final_snapshot  = var.skip_final_snapshot
+  db_password          = var.db_password
+  vpc_id               = module.vpc.vpc_id
+  vpc_cidr             = module.vpc.vpc_cidr
+  private_subnet_ids   = module.vpc.private_subnet_ids
+  kms_key_arn          = module.kms.key_arn
+}
+
+module "s3" {
+  source = "./modules/s3"
+
+  bucket_name           = "${var.project_name}-${var.environment}-assets"
+  environment           = var.environment
+  project_name          = var.project_name
+  enable_versioning     = var.enable_versioning
+  kms_key_arn           = module.kms.key_arn
+  vpc_id                = module.vpc.vpc_id
+  private_route_table_ids = [module.vpc.private_route_table_id]
+  aws_region            = var.aws_region
+}

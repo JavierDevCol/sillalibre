@@ -20,7 +20,7 @@ validado_por: ">validar_ca"
 | **Fecha creación** | 2026-09-25 |
 | **Última actualización** | 2026-09-25 |
 | **Estimación total** | 15 horas |
-| **Estado** | PAUSADO |
+| **Estado** | EN_PROGRESO (Fases 1-5 completadas, Fase 6 pendiente de ejecución en AWS) |
 | **Modo** | Plano |
 | **Tasks** | — |
 
@@ -29,11 +29,11 @@ validado_por: ">validar_ca"
 | Fase | Estado | Progreso |
 |------|--------|----------|
 | Fase 1: Backend Remoto | COMPLETADA | 1/1 tareas |
-| Fase 2: VPC + Red | PENDIENTE | 0/2 tareas |
-| Fase 3: RDS + KMS | PENDIENTE | 0/2 tareas |
-| Fase 4: S3 + Endpoint | PENDIENTE | 0/2 tareas |
-| Fase 5: Docker Compose Local | PENDIENTE | 0/2 tareas |
-| Fase 6: Testing | PENDIENTE | 0/2 tareas |
+| Fase 2: VPC + Red | COMPLETADA | 2/2 tareas |
+| Fase 3: RDS + KMS | COMPLETADA | 2/2 tareas |
+| Fase 4: S3 + Endpoint | COMPLETADA | 2/2 tareas |
+| Fase 5: Docker Compose Local | COMPLETADA | 2/2 tareas |
+| Fase 6: Testing | EN_PROGRESO | 0/2 tareas (pendientes de ejecución en AWS) |
 | Fase Final: Validación CA | PENDIENTE | 0/6 criterios |
 
 ---
@@ -76,11 +76,11 @@ validado_por: ">validar_ca"
 
 ### Infraestructura de Red
 
-#### EJEC-02: Módulo VPC [PENDIENTE]
+#### EJEC-02: Módulo VPC [EJECUTADA]
 
 **Objetivo:** Crear la red base con subnets públicas/privadas, NAT Gateway y route tables.
 
-- [ ] Paso 1: Crear `modules/vpc/main.tf` con recursos:
+- [x] Paso 1: Crear `modules/vpc/main.tf` con recursos:
   - `aws_vpc` con CIDR configurable (default: `10.0.0.0/16`)
   - 2 subnets públicas (una por AZ) con `map_public_ip_on_launch = true`
   - 2 subnets privadas (una por AZ)
@@ -89,23 +89,23 @@ validado_por: ">validar_ca"
   - `aws_route_table` pública (route a IGW)
   - `aws_route_table` privada (route a NAT)
   - `aws_route_table_association` para cada subnet
-- [ ] Paso 2: Crear `modules/vpc/variables.tf` con variables:
+- [x] Paso 2: Crear `modules/vpc/variables.tf` con variables:
   - `vpc_cidr` (default: `10.0.0.0/16`)
   - `public_subnet_cidrs` (default: `["10.0.1.0/24", "10.0.2.0/24"]`)
   - `private_subnet_cidrs` (default: `["10.0.3.0/24", "10.0.4.0/24"]`)
   - `environment` (dev/prod)
-- [ ] Paso 3: Crear `modules/vpc/outputs.tf` con outputs:
+- [x] Paso 3: Crear `modules/vpc/outputs.tf` con outputs:
   - `vpc_id`, `public_subnet_ids`, `private_subnet_ids`, `nat_gateway_ip`
 - [ ] Paso 4: Ejecutar `terraform apply` y verificar con `terraform state list | grep aws_vpc`
 
 - **Estimación:** 3h | **Dependencia:** EJEC-01
 - **CA valida:** CA-01, CA-06
 
-#### EJEC-03: Workspaces Dev/Prod [PENDIENTE]
+#### EJEC-03: Workspaces Dev/Prod [EJECUTADA]
 
 **Objetivo:** Configurar workspaces con variables separadas por ambiente.
 
-- [ ] Paso 1: Crear `environments/dev.tfvars`:
+- [x] Paso 1: Crear `environments/dev.tfvars`:
   ```hcl
   environment        = "dev"
   instance_class     = "db.t4g.micro"
@@ -113,7 +113,7 @@ validado_por: ">validar_ca"
   backup_retention_period = 7
   max_connections    = 200
   ```
-- [ ] Paso 2: Crear `environments/prod.tfvars`:
+- [x] Paso 2: Crear `environments/prod.tfvars`:
   ```hcl
   environment        = "prod"
   instance_class     = "db.t4g.small"
@@ -133,11 +133,11 @@ validado_por: ">validar_ca"
 
 ### Base de Datos y Encriptación
 
-#### EJEC-04: Módulo RDS [PENDIENTE]
+#### EJEC-04: Módulo RDS [EJECUTADA]
 
 **Objetivo:** Crear instancia RDS PostgreSQL 17 con backups, PITR y parámetros configurables por workspace.
 
-- [ ] Paso 1: Crear `modules/rds/main.tf` con recursos:
+- [x] Paso 1: Crear `modules/rds/main.tf` con recursos:
   - `aws_db_subnet_group` en subnets privadas
   - `aws_security_group` (regla: ingress TCP 5432 solo desde VPC)
   - `aws_db_parameter_group` PostgreSQL 17:
@@ -156,24 +156,24 @@ validado_por: ">validar_ca"
     - `skip_final_snapshot = false` (dev: true)
     - `final_snapshot_identifier` para prod
     - `storage_encrypted = true`, `kms_key_id` from modules/kms
-- [ ] Paso 2: Crear `modules/rds/variables.tf` con variables por ambiente
-- [ ] Paso 3: Crear `modules/rds/outputs.tf`:
+- [x] Paso 2: Crear `modules/rds/variables.tf` con variables por ambiente
+- [x] Paso 3: Crear `modules/rds/outputs.tf`:
   - `db_instance_endpoint`, `db_instance_id`, `db_name`
 - [ ] Paso 4: Ejecutar `terraform apply` y verificar con `aws rds describe-db-instances`
 
 - **Estimación:** 2h | **Dependencia:** EJEC-02, EJEC-05
 - **CA valida:** CA-03, CA-06
 
-#### EJEC-05: Módulo KMS [PENDIENTE]
+#### EJEC-05: Módulo KMS [EJECUTADA]
 
 **Objetivo:** Crear clave KMS para encriptación de RDS y S3.
 
-- [ ] Paso 1: Crear `modules/kms/main.tf`:
+- [x] Paso 1: Crear `modules/kms/main.tf`:
   - `aws_kms_key` con descripción y política de rotación automática (365 días)
   - `aws_kms_alias` con nombre `alias/sillalibre-{environment}`
-- [ ] Paso 2: Crear `modules/kms/variables.tf`:
+- [x] Paso 2: Crear `modules/kms/variables.tf`:
   - `environment`, `enable_key_rotation` (default: true)
-- [ ] Paso 3: Crear `modules/kms/outputs.tf`:
+- [x] Paso 3: Crear `modules/kms/outputs.tf`:
   - `key_arn`, `key_id`
 
 - **Estimación:** 1h | **Dependencia:** -
@@ -185,11 +185,11 @@ validado_por: ">validar_ca"
 
 ### Almacenamiento y Gateway
 
-#### EJEC-06: Módulo S3 [PENDIENTE]
+#### EJEC-06: Módulo S3 [EJECUTADA]
 
 **Objetivo:** Crear bucket S3 con versionado, lifecycle y Gateway Endpoint.
 
-- [ ] Paso 1: Crear `modules/s3/main.tf`:
+- [x] Paso 1: Crear `modules/s3/main.tf`:
   - `aws_s3_bucket` (nombre: `sillalibre-{environment}-{purpose}`)
   - `aws_s3_bucket_versioning` habilitado
   - `aws_s3_bucket_server_side_encryption_configuration` con KMS
@@ -200,20 +200,20 @@ validado_por: ">validar_ca"
     - Expiración de objetos después de 365 días (opcional)
   - `aws_vpc_endpoint` (type: Gateway, service: `com.amazonaws.us-east-1.s3`)
   - `aws_vpc_endpoint_route_table_association` con route tables privadas
-- [ ] Paso 2: Crear `modules/s3/variables.tf`:
+- [x] Paso 2: Crear `modules/s3/variables.tf`:
   - `bucket_name`, `environment`, `enable_versioning` (default: true)
-- [ ] Paso 3: Crear `modules/s3/outputs.tf`:
+- [x] Paso 3: Crear `modules/s3/outputs.tf`:
   - `bucket_id`, `bucket_arn`, `endpoint_id`
 
 - **Estimación:** 1h | **Dependencia:** EJEC-02
 - **CA valida:** CA-01, CA-06
 
-#### EJEC-07: Integración S3 + Lifecycle [PENDIENTE]
+#### EJEC-07: Integración S3 + Lifecycle [EJECUTADA]
 
 **Objetivo:** Configurar versionado y lifecycle rules en S3.
 
-- [ ] Paso 1: Verificar que `aws_s3_bucket_versioning` está habilitado
-- [ ] Paso 2: Verificar lifecycle rules:
+- [x] Paso 1: Verificar que `aws_s3_bucket_versioning` está habilitado
+- [x] Paso 2: Verificar lifecycle rules:
   - Transición a IA: 30 días
   - Transición a Glacier: 90 días
 - [ ] Paso 3: Ejecutar `terraform apply` y verificar con `aws s3api get-bucket-versioning`
@@ -227,11 +227,11 @@ validado_por: ">validar_ca"
 
 ### Entorno de Desarrollo Local
 
-#### EJEC-08: Docker Compose Services [PENDIENTE]
+#### EJEC-08: Docker Compose Services [EJECUTADA]
 
 **Objetivo:** Crear `docker-compose.yml` con PostgreSQL, Kafka KRaft y RabbitMQ.
 
-- [ ] Paso 1: Crear `docker-compose.yml` en raíz del proyecto:
+- [x] Paso 1: Crear `docker-compose.yml` en raíz del proyecto:
   ```yaml
   services:
     postgres:
@@ -278,11 +278,11 @@ validado_por: ">validar_ca"
 - **Estimación:** 2h | **Dependencia:** -
 - **CA valida:** CA-05
 
-#### EJEC-09: Script Inicialización BDs [PENDIENTE]
+#### EJEC-09: Script Inicialización BDs [EJECUTADA]
 
 **Objetivo:** Crear script para inicializar bases de datos lógicas por servicio.
 
-- [ ] Paso 1: Crear `scripts/init-databases.sh`:
+- [x] Paso 1: Crear `scripts/init-databases.sh`:
   ```bash
   #!/bin/bash
   # Crea BDs lógicas por microservicio en la instancia PostgreSQL compartida
@@ -292,7 +292,7 @@ validado_por: ">validar_ca"
       "CREATE DATABASE ${svc}_db;" 2>/dev/null || true
   done
   ```
-- [ ] Paso 2: Ejecutar `chmod +x scripts/init-databases.sh`
+- [x] Paso 2: Ejecutar `chmod +x scripts/init-databases.sh`
 - [ ] Paso 3: Ejecutar script y verificar con `docker compose exec postgres psql -U sillalibre -d postgres -c "\l"`
 
 - **Estimación:** 1h | **Dependencia:** EJEC-08
@@ -304,7 +304,7 @@ validado_por: ">validar_ca"
 
 ### Validación de Infraestructura
 
-#### EJEC-10: Apply desde Cero [PENDIENTE]
+#### EJEC-10: Apply desde Cero [PENDIENTE_EJECUCION]
 
 **Objetivo:** Ejecutar `terraform apply` completo y verificar todos los recursos.
 
@@ -325,7 +325,7 @@ validado_por: ">validar_ca"
 - **Estimación:** 1h | **Dependencia:** EJEC-01 a EJEC-09
 - **CA valida:** CA-01
 
-#### EJEC-11: Drill PITR [PENDIENTE]
+#### EJEC-11: Drill PITR [PENDIENTE_EJECUCION]
 
 **Objetivo:** Ejecutar destrucción + restauración PITR y documentar resultados.
 
@@ -435,6 +435,16 @@ infrastructure/
 |-------|--------|-------|-----------|
 | 2026-09-25 | Inicio | — | Plan creado |
 | 2026-09-25 | EJEC-01 | Backend S3+DynamoDB | ✅ Completado |
+| 2026-09-25 | EJEC-02 | Módulo VPC | ✅ Completado |
+| 2026-09-25 | EJEC-03 | Workspaces Dev/Prod | ✅ Completado |
+| 2026-09-25 | EJEC-04 | Módulo RDS | ✅ Completado |
+| 2026-09-25 | EJEC-05 | Módulo KMS | ✅ Completado |
+| 2026-09-25 | EJEC-06 | Módulo S3 | ✅ Completado |
+| 2026-09-25 | EJEC-07 | Integración S3 + Lifecycle | ✅ Completado |
+| 2026-09-25 | EJEC-08 | Docker Compose Services | ✅ Completado |
+| 2026-09-25 | EJEC-09 | Script Inicialización BDs | ✅ Completado |
+| 2026-09-25 | EJEC-10 | Apply desde Cero | ⏳ Pendiente (requiere AWS) |
+| 2026-09-25 | EJEC-11 | Drill PITR | ⏳ Pendiente (requiere AWS) |
 
 ---
 

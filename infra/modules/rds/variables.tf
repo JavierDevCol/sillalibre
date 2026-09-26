@@ -1,17 +1,6 @@
 # ============================================
-# VARIABLES GLOBALES
+# VARIABLES - Módulo RDS
 # ============================================
-
-variable "aws_region" {
-  description = "Región de AWS para todos los recursos"
-  type        = string
-  default     = "us-east-1"
-
-  validation {
-    condition     = can(regex("^[a-z]{2}-[a-z]+-[0-9]$", var.aws_region))
-    error_message = "Debe ser una región AWS válida (ej: us-east-1)."
-  }
-}
 
 variable "environment" {
   description = "Nombre del ambiente (dev, prod)"
@@ -29,46 +18,30 @@ variable "project_name" {
   default     = "sillalibre"
 }
 
-# ============================================
-# VARIABLES VPC
-# ============================================
-
-variable "vpc_cidr" {
-  description = "CIDR block para la VPC"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "public_subnet_cidrs" {
-  description = "CIDR blocks para subnets públicas (una por AZ)"
-  type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
-}
-
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks para subnets privadas (una por AZ)"
-  type        = list(string)
-  default     = ["10.0.3.0/24", "10.0.4.0/24"]
-}
-
-# ============================================
-# VARIABLES RDS
-# ============================================
-
 variable "instance_class" {
   description = "Clase de instancia RDS"
   type        = string
   default     = "db.t4g.micro"
+
+  validation {
+    condition     = can(regex("^db\\.", var.instance_class))
+    error_message = "Debe ser una clase de instancia RDS válida (ej: db.t4g.micro)."
+  }
 }
 
 variable "allocated_storage" {
   description = "Storage allocado en GB"
   type        = number
   default     = 20
+
+  validation {
+    condition     = var.allocated_storage >= 20
+    error_message = "El storage allocado debe ser al menos 20 GB."
+  }
 }
 
 variable "max_allocated_storage" {
-  description = "Storage máximo allocado en GB"
+  description = "Storage máximo allocado en GB (para auto-scaling)"
   type        = number
   default     = 100
 }
@@ -77,6 +50,11 @@ variable "backup_retention_period" {
   description = "Período de retención de backups en días"
   type        = number
   default     = 7
+
+  validation {
+    condition     = var.backup_retention_period >= 7
+    error_message = "El período de retención debe ser al menos 7 días."
+  }
 }
 
 variable "max_connections" {
@@ -97,18 +75,40 @@ variable "skip_final_snapshot" {
   default     = true
 }
 
+variable "db_name" {
+  description = "Nombre de la base de datos"
+  type        = string
+  default     = "sillalibre"
+}
+
+variable "db_username" {
+  description = "Usuario de la base de datos"
+  type        = string
+  default     = "sillalibre"
+}
+
 variable "db_password" {
   description = "Contraseña de la base de datos"
   type        = string
   sensitive   = true
 }
 
-# ============================================
-# VARIABLES S3
-# ============================================
+variable "vpc_id" {
+  description = "ID de la VPC"
+  type        = string
+}
 
-variable "enable_versioning" {
-  description = "Habilitar versionado del bucket S3"
-  type        = bool
-  default     = true
+variable "vpc_cidr" {
+  description = "CIDR block de la VPC"
+  type        = string
+}
+
+variable "private_subnet_ids" {
+  description = "IDs de las subnets privadas"
+  type        = list(string)
+}
+
+variable "kms_key_arn" {
+  description = "ARN de la clave KMS para encriptación"
+  type        = string
 }

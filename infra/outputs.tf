@@ -43,3 +43,70 @@ output "kms_key_alias" {
   description = "Alias de la clave KMS principal"
   value       = module.kms.key_alias
 }
+
+# ============================================
+# VPC OUTPUTS
+# ============================================
+
+output "vpc_id" {
+  description = "ID de la VPC"
+  value       = module.vpc.vpc_id
+}
+
+output "vpc_cidr" {
+  description = "CIDR block de la VPC"
+  value       = module.vpc.vpc_cidr
+}
+
+output "public_subnet_ids" {
+  description = "IDs de las subnets públicas"
+  value       = module.vpc.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "IDs de las subnets privadas"
+  value       = module.vpc.private_subnet_ids
+}
+
+output "nat_gateway_ip" {
+  description = "IP del NAT Gateway"
+  value       = module.vpc.nat_gateway_ip
+}
+
+# ============================================
+# RDS OUTPUTS
+# ============================================
+
+output "rds_endpoint" {
+  description = "Endpoint de la instancia RDS"
+  value       = module.rds.db_instance_endpoint
+}
+
+output "rds_instance_id" {
+  description = "ID de la instancia RDS"
+  value       = module.rds.db_instance_id
+}
+
+output "rds_db_name" {
+  description = "Nombre de la base de datos"
+  value       = module.rds.db_name
+}
+
+# ============================================
+# S3 OUTPUTS
+# ============================================
+
+output "s3_bucket_id" {
+  description = "ID del bucket S3"
+  value       = module.s3.bucket_id
+}
+
+output "s3_bucket_arn" {
+  description = "ARN del bucket S3"
+  value       = module.s3.bucket_arn
+}
+
+output "s3_endpoint_id" {
+  description = "ID del VPC Endpoint S3"
+  value       = module.s3.endpoint_id
+}
