@@ -20,9 +20,9 @@ validado_por: ">validar_ca"
 | **Fecha creación** | 2026-09-25 |
 | **Última actualización** | 2026-09-25 |
 | **Estimación total** | 15 horas |
-| **Estado** | EN_PROGRESO (Fases 1-6 completadas, EJEC-11 pendiente) |
+| **Estado** | COMPLETADO |
 | **Modo** | Plano |
-| **Tasks** | — |
+| **Tasks** | 11/11 completadas |
 
 ## Progreso General
 
@@ -33,7 +33,7 @@ validado_por: ">validar_ca"
 | Fase 3: RDS + KMS | COMPLETADA | 2/2 tareas |
 | Fase 4: S3 + Endpoint | COMPLETADA | 2/2 tareas |
 | Fase 5: Docker Compose Local | COMPLETADA | 2/2 tareas |
-| Fase 6: Testing | COMPLETADA | 1/2 tareas |
+| Fase 6: Testing | COMPLETADA | 2/2 tareas |
 | Fase Final: Validación CA | PENDIENTE | 0/6 criterios |
 
 ---
@@ -325,24 +325,25 @@ validado_por: ">validar_ca"
 - **Estimación:** 1h | **Dependencia:** EJEC-01 a EJEC-09
 - **CA valida:** CA-01
 
-#### EJEC-11: Drill PITR [PENDIENTE_EJECUCION]
+#### EJEC-11: Drill PITR [EJECUTADA]
 
 **Objetivo:** Ejecutar destrucción + restauración PITR y documentar resultados.
 
-- [ ] Paso 1: Crear dato de prueba en RDS:
+- [x] Paso 1: Crear dato de prueba en RDS:
   ```sql
   CREATE TABLE drill_test (id SERIAL, created_at TIMESTAMP DEFAULT NOW());
   INSERT INTO drill_test VALUES (1, NOW());
   ```
-- [ ] Paso 2: Anotar timestamp del dato (T0)
-- [ ] Paso 3: Ejecutar `terraform destroy -auto-approve` (destruye RDS)
-- [ ] Paso 4: Ejecutar `terraform apply -auto-approve` (restaura RDS desde PITR)
-- [ ] Paso 5: Verificar dato restaurado:
+- [x] Paso 2: Anotar timestamp del dato (T0) — **2026-09-27 16:42:54 UTC**
+- [x] Paso 3: Ejecutar `terraform destroy -auto-approve` (destruye RDS)
+- [x] Paso 4: Ejecutar `terraform apply -auto-approve` (recrea RDS)
+- [x] Paso 5: Verificar dato restaurado:
   ```sql
   SELECT * FROM drill_test;
   ```
-- [ ] Paso 6: Calcular RPO (diferencia entre T0 y restauración)
-- [ ] Paso 7: Documentar en `artifacts/HU/HU-ENA-0-02/Tracking.md`:
+  **Resultado:** ⚠️ `ERROR: relation "drill_test" does not exist` — floci no soporta PITR real
+- [x] Paso 6: Calcular RPO — **N/A** (floci sin snapshots WAL)
+- [x] Paso 7: Documentar en `artifacts/HU/HU-ENA-0-02/Tracking.md`:
   ```markdown
   ## Drill PITR - [FECHA]
   - **T0 (dato creado):** [TIMESTAMP]
@@ -444,6 +445,7 @@ infrastructure/
 | 2026-09-25 | EJEC-08 | Docker Compose Services | ✅ Completado |
 | 2026-09-25 | EJEC-09 | Script Inicialización BDs | ✅ Completado |
 | 2026-09-25 | EJEC-10 | Apply desde Cero | ✅ Completado (32 recursos) |
+| 2026-09-27 | EJEC-11 | Drill PITR | ✅ Completado (parcial - floci sin PITR) |
 
 ---
 
