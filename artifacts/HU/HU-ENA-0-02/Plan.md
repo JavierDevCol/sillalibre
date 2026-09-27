@@ -371,7 +371,7 @@ validado_por: ">validar_ca"
 | CA-01 | `terraform apply` crea todos los recursos + backend S3+DynamoDB | [x] |
 | CA-02 | Workspaces dev/prod con estado y config separados | [x] |
 | CA-03 | RDS: backups 7d+PITR, deletion_protection, max_connections=200 | [x] |
-| CA-04 | Drill PITR: RPO≤5min, RTO≤30min, documentado en Tracking.md | [x] |
+| CA-04 | Drill PITR: RPO≤5min, RTO≤30min, documentado en Tracking.md | [~] |
 | CA-05 | Docker Compose: Kafka 3.7 + RabbitMQ 3.13 en puertos 9092/5672 | [x] |
 | CA-06 | Módulos siguen estructura: `modules/vpc/`, `modules/rds/`, `modules/s3/`, `modules/kms/` | [x] |
 
@@ -380,7 +380,7 @@ validado_por: ">validar_ca"
 - [x] Todos los recursos Terraform creados y verificados
 - [x] `terraform state list` muestra todos los recursos esperados
 - [x] Docker Compose levanta servicios correctamente
-- [x] Drill PITR documentado con evidencia
+- [~] Drill PITR documentado con evidencia (parcial — floci sin PITR real)
 - [x] Sin errores en `terraform plan` (plan limpio)
 - [x] Revisión de código completada
 

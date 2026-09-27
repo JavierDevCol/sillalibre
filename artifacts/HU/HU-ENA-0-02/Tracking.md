@@ -39,10 +39,11 @@
 - **T0 (dato creado):** 2026-09-27 16:42:54 UTC
 - **Destroy iniciado:** 2026-09-27 ~16:43:00 UTC
 - **Apply completado:** 2026-09-27 ~16:45:30 UTC
-- **RPO:** N/A (floci no soporta PITR real)
-- **RTO:** ~2.5 minutos (destroy + apply)
-- **Resultado:** ⚠️ PARCIAL — floci simula RDS pero no guarda snapshots ni logs WAL. La tabla `drill_test` NO se restauró (relation does not exist)
-- **Nota:** En AWS real con RDS PostgreSQL 17, PITR funciona con retención de 7 días configurada en el módulo
+- **RPO:** ❌ No medible (floci no soporta PITR real)
+- **RTO:** ~2.5 minutos ✅ (cumple ≤30min)
+- **Dato restaurado:** ❌ NO (`relation "drill_test" does not exist`)
+- **Resultado:** ⚠️ PARCIAL — RTO cumple, pero RPO no medible y dato no restaurado
+- **Nota:** floci simula RDS pero no guarda snapshots ni logs WAL. Para cumplir CA-04 completamente se requiere ejecutar el drill en AWS real con RDS PostgreSQL 17
 - **Evidencia:** `terraform destroy -target=module.rds` → `terraform apply -target=module.rds` → SELECT fallido
 
 ---
