@@ -29,7 +29,8 @@
 | 2026-09-25 | EJEC-08 | Docker Compose Services | ✅ Completado | — |
 | 2026-09-25 | EJEC-09 | Script Inicialización BDs | ✅ Completado | — |
 | 2026-09-27 | EJEC-10 | Apply desde Cero | ✅ Completado (32 recursos) | — |
-| 2026-09-27 | EJEC-11 | Drill PITR | ⚠️ Parcial (floci sin PITR) | — |
+| 2026-09-27 | EJEC-03 | Workspaces Dev/Prod | ✅ Completado (ambos workspaces creados) | — |
+| 2026-09-27 | CA-02 | Validación Workspaces | ✅ dev: vpc-1fe73985, prod: vpc-ed585bfd | — |
 
 ---
 

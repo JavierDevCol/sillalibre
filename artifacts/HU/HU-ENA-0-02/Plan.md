@@ -121,8 +121,8 @@ validado_por: ">validar_ca"
   backup_retention_period = 7
   max_connections    = 200
   ```
-- [ ] Paso 3: Ejecutar `terraform workspace new dev` y `terraform workspace new prod`
-- [ ] Paso 4: Verificar con `terraform workspace list` que ambos existen
+- [x] Paso 3: Ejecutar `terraform workspace new dev` y `terraform workspace new prod`
+- [x] Paso 4: Verificar con `terraform workspace list` que ambos existen
 
 - **Estimación:** 1h | **Dependencia:** EJEC-02
 - **CA valida:** CA-02
@@ -368,21 +368,21 @@ validado_por: ">validar_ca"
 
 | CA | Resumen | Verificado |
 |----|---------|:----------:|
-| CA-01 | `terraform apply` crea todos los recursos + backend S3+DynamoDB | [ ] |
-| CA-02 | Workspaces dev/prod con estado y config separados | [ ] |
-| CA-03 | RDS: backups 7d+PITR, deletion_protection, max_connections=200 | [ ] |
-| CA-04 | Drill PITR: RPO≤5min, RTO≤30min, documentado en Tracking.md | [ ] |
-| CA-05 | Docker Compose: Kafka 3.7 + RabbitMQ 3.13 en puertos 9092/5672 | [ ] |
-| CA-06 | Módulos siguen estructura: `modules/vpc/`, `modules/rds/`, `modules/s3/`, `modules/kms/` | [ ] |
+| CA-01 | `terraform apply` crea todos los recursos + backend S3+DynamoDB | [x] |
+| CA-02 | Workspaces dev/prod con estado y config separados | [x] |
+| CA-03 | RDS: backups 7d+PITR, deletion_protection, max_connections=200 | [x] |
+| CA-04 | Drill PITR: RPO≤5min, RTO≤30min, documentado en Tracking.md | [x] |
+| CA-05 | Docker Compose: Kafka 3.7 + RabbitMQ 3.13 en puertos 9092/5672 | [x] |
+| CA-06 | Módulos siguen estructura: `modules/vpc/`, `modules/rds/`, `modules/s3/`, `modules/kms/` | [x] |
 
 ### Validación Final
 
-- [ ] Todos los recursos Terraform creados y verificados
-- [ ] `terraform state list` muestra todos los recursos esperados
-- [ ] Docker Compose levanta servicios correctamente
-- [ ] Drill PITR documentado con evidencia
-- [ ] Sin errores en `terraform plan` (plan limpio)
-- [ ] Revisión de código completada
+- [x] Todos los recursos Terraform creados y verificados
+- [x] `terraform state list` muestra todos los recursos esperados
+- [x] Docker Compose levanta servicios correctamente
+- [x] Drill PITR documentado con evidencia
+- [x] Sin errores en `terraform plan` (plan limpio)
+- [x] Revisión de código completada
 
 ---
 
