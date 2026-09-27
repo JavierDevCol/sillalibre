@@ -33,7 +33,8 @@ terraform {
 # ============================================
 
 provider "aws" {
-  region = var.aws_region
+  region  = var.aws_region
+  profile = "floci"
 
   default_tags {
     tags = {
@@ -42,6 +43,22 @@ provider "aws" {
       ManagedBy   = "terraform"
     }
   }
+
+  endpoints {
+    s3                = "http://localhost:4566"
+    dynamodb          = "http://localhost:4566"
+    iam               = "http://localhost:4566"
+    sts               = "http://localhost:4566"
+    kms               = "http://localhost:4566"
+    rds               = "http://localhost:4566"
+    ec2               = "http://localhost:4566"
+    cloudwatch        = "http://localhost:4566"
+    logs              = "http://localhost:4566"
+  }
+
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
 }
 
 # ============================================

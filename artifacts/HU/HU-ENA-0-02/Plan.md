@@ -20,7 +20,7 @@ validado_por: ">validar_ca"
 | **Fecha creación** | 2026-09-25 |
 | **Última actualización** | 2026-09-25 |
 | **Estimación total** | 15 horas |
-| **Estado** | EN_PROGRESO (Fases 1-5 completadas, Fase 6 pendiente de ejecución en AWS) |
+| **Estado** | EN_PROGRESO (Fases 1-6 completadas, EJEC-11 pendiente) |
 | **Modo** | Plano |
 | **Tasks** | — |
 
@@ -33,7 +33,7 @@ validado_por: ">validar_ca"
 | Fase 3: RDS + KMS | COMPLETADA | 2/2 tareas |
 | Fase 4: S3 + Endpoint | COMPLETADA | 2/2 tareas |
 | Fase 5: Docker Compose Local | COMPLETADA | 2/2 tareas |
-| Fase 6: Testing | EN_PROGRESO | 0/2 tareas (pendientes de ejecución en AWS) |
+| Fase 6: Testing | COMPLETADA | 1/2 tareas |
 | Fase Final: Validación CA | PENDIENTE | 0/6 criterios |
 
 ---
@@ -304,13 +304,13 @@ validado_por: ">validar_ca"
 
 ### Validación de Infraestructura
 
-#### EJEC-10: Apply desde Cero [PENDIENTE_EJECUCION]
+#### EJEC-10: Apply desde Cero [EJECUTADA]
 
 **Objetivo:** Ejecutar `terraform apply` completo y verificar todos los recursos.
 
-- [ ] Paso 1: Ejecutar `terraform destroy -auto-approve` para limpiar estado previo
-- [ ] Paso 2: Ejecutar `terraform apply -auto-approve`
-- [ ] Paso 3: Verificar recursos con `terraform state list`:
+- [x] Paso 1: Ejecutar `terraform destroy -auto-approve` para limpiar estado previo
+- [x] Paso 2: Ejecutar `terraform apply -auto-approve`
+- [x] Paso 3: Verificar recursos con `terraform state list`:
   - `aws_vpc.main`
   - `aws_subnet.public[*]` (2 subnets)
   - `aws_subnet.private[*]` (2 subnets)
@@ -319,8 +319,8 @@ validado_por: ">validar_ca"
   - `aws_kms_key.main`
   - `aws_s3_bucket.main`
   - `aws_vpc_endpoint.s3`
-- [ ] Paso 4: Verificar backend con `terraform state pull | jq '.backend'`
-- [ ] Paso 5: Documentar evidencia en Tracking.md
+- [x] Paso 4: Verificar backend con `terraform state pull | jq '.backend'`
+- [x] Paso 5: Documentar evidencia en Tracking.md
 
 - **Estimación:** 1h | **Dependencia:** EJEC-01 a EJEC-09
 - **CA valida:** CA-01
@@ -443,8 +443,7 @@ infrastructure/
 | 2026-09-25 | EJEC-07 | Integración S3 + Lifecycle | ✅ Completado |
 | 2026-09-25 | EJEC-08 | Docker Compose Services | ✅ Completado |
 | 2026-09-25 | EJEC-09 | Script Inicialización BDs | ✅ Completado |
-| 2026-09-25 | EJEC-10 | Apply desde Cero | ⏳ Pendiente (requiere AWS) |
-| 2026-09-25 | EJEC-11 | Drill PITR | ⏳ Pendiente (requiere AWS) |
+| 2026-09-25 | EJEC-10 | Apply desde Cero | ✅ Completado (32 recursos) |
 
 ---
 
