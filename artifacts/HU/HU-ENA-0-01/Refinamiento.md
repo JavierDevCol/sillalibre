@@ -106,11 +106,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Estado** | ⏳ Pendiente |
-| **Aprobado por** | — |
-| **Fecha aprobación** | — |
-| **Nivel validación** | — |
-| **Notas** | — |
+| **Estado** | ✅ Aprobada |
+| **Aprobado por** | Product Owner Agent |
+| **Fecha aprobación** | 2026-09-24 |
+| **Nivel validación** | DoR PASS |
+| **Notas** | Criterios INVEST cumplidos, CAs BDD verificables |
 
 ### Directrices de Planificación
 

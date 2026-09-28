@@ -17,6 +17,7 @@
 | **Origen** | ADR-003 §Validación · Auditoría #1 🔴 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [P] Planificada |
 
 ## Descripción
 

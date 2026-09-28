@@ -17,6 +17,8 @@
 | **Origen** | ADR-003 §Mitigaciones · Auditoría QW#4, #12 · Decisión R1 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [C] Completed |
+| **Fecha Planificación** | 2026-09-24 |
 
 ## Descripción
 
