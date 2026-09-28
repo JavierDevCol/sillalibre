@@ -9,15 +9,15 @@
 | **Tipo** | Enabler |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
-| **Complejidad** | 🟡 MEDIO |
-| **Story Points** | 8 SP |
-| **Estimación** | 8-10 horas |
+| **Complejidad** | 🔴 ALTO |
+| **Story Points** | 13 SP |
+| **Estimación** | 12-14 horas |
 | **Fecha Creación** | 2026-09-12 |
 | **Creado por** | Product Owner Agent |
 | **Origen** | ADR-003 §CI/CD · Auditoría #4 🟠 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
-| **Estado** | [R] Refinada |
+| **Estado** | [E] En Ejecución |
 
 ## Descripción
 
@@ -41,7 +41,10 @@
 - OIDC: cero claves estáticas
 - Trivy fail-gate: CRITICAL/HIGH bloquea merge
 - SBOM generado como artifact
-- Deploy rolling en ECS (prod con aprobación manual)
+- Deploy rolling en ECS (prod con aprobación manual vía GitHub Environments / required reviewers)
+- Rollback automático vía ECS deployment circuit breaker (health check falla)
+- Pipeline objetivo ≤ 10 min con cache caliente (informativo, sin fail-gate)
+- Build tool Java: Gradle (decisión Q2)
 
 ---
 
