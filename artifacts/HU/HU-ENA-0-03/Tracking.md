@@ -9,8 +9,8 @@
 | **Estado** | EN_PROGRESO |
 | **Modo ejecución** | fase_por_fase |
 | **Rama de trabajo** | *(pendiente de confirmación)* |
-| **Progreso** | 0% (0/11 tareas) |
-| **Sección actual** | 1/6 - Fase 1: Infraestructura (Terraform) |
+| **Progreso** | 27% (3/11 tareas) |
+| **Sección actual** | 2/6 - Fase 2: Workflow base |
 | **Última actualización** | 2026-09-28 |
 
 ---
@@ -20,6 +20,7 @@
 | Fecha | Tarea | Acción | Resultado | Duración |
 |-------|-------|--------|-----------|----------|
 | 2026-09-28 | — | Inicio de ejecución (modo fase_por_fase) | — | — |
+| 2026-09-28 | EJEC-01..03 | Fase 1 completada | ✅ terraform validate + plan + apply OK en workspace dev (12 recursos: ECR patron, ECS cluster+service, rol OIDC) | 35min |
 
 ---
 

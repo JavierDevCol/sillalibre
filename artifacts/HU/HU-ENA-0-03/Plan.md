@@ -28,7 +28,7 @@ validado_por: ">validar_ca"
 
 | Fase | Estado | Progreso |
 |------|--------|----------|
-| Fase 1: Infraestructura (Terraform) | ⬜ Pendiente | 0/3 tareas |
+| Fase 1: Infraestructura (Terraform) | ✅ Completada | 3/3 tareas |
 | Fase 2: Workflow base | ⬜ Pendiente | 0/3 tareas |
 | Fase 3: Seguridad | ⬜ Pendiente | 0/2 tareas |
 | Fase 4: Deploy | ⬜ Pendiente | 0/2 tareas |
@@ -43,23 +43,23 @@ validado_por: ">validar_ca"
 
 ### Módulos de despliegue
 
-#### EJEC-01: Módulo Terraform ECR [PENDIENTE]
-- [ ] Crear `infra/modules/ecr` (repo por servicio, naming `sillalibre/<servicio>`, image tag = git SHA)
-- [ ] Declarar output `ecr_repo_urls` consumible por el workflow
-- [ ] `terraform plan` sin errores en workspace `dev`
+#### EJEC-01: Módulo Terraform ECR [EJECUTADA]
+- [X] Crear `infra/modules/ecr` (repo por servicio, naming `sillalibre/<servicio>`, image tag = git SHA)
+- [X] Declarar output `ecr_repo_urls` consumible por el workflow
+- [X] `terraform plan` sin errores en workspace `dev`
 - **Estimación:** 1h | **Dependencia:** -
 
-#### EJEC-02: Módulo Terraform ECS Fargate [PENDIENTE]
-- [ ] Crear `infra/modules/ecs` (cluster, service, task definition con health check HTTP)
-- [ ] Habilitar **deployment circuit breaker con rollback** (CA-09)
-- [ ] IAM task role mínimo (CloudWatch Logs + X-Ray según ADR-007)
-- [ ] `terraform apply` en workspace `dev` con servicio placeholder
+#### EJEC-02: Módulo Terraform ECS Fargate [EJECUTADA]
+- [X] Crear `infra/modules/ecs` (cluster, service, task definition con health check HTTP)
+- [X] Habilitar **deployment circuit breaker con rollback** (CA-09)
+- [X] IAM task role mínimo (CloudWatch Logs + X-Ray según ADR-007)
+- [X] `terraform apply` en workspace `dev` con servicio placeholder
 - **Estimación:** 2h | **Dependencia:** EJEC-01
 
-#### EJEC-03: Rol IAM OIDC para GitHub Actions [PENDIENTE]
-- [ ] Crear `infra/modules/oidc-role` (provider `token.actions.githubusercontent.com`, repo app-barber)
-- [ ] Permisos mínimos: ECR push, ECS update-service/describe, CloudWatch logs
-- [ ] Sin claves estáticas — solo role assumption (CA-07)
+#### EJEC-03: Rol IAM OIDC para GitHub Actions [EJECUTADA]
+- [X] Crear `infra/modules/oidc-role` (provider `token.actions.githubusercontent.com`, repo app-barber)
+- [X] Permisos mínimos: ECR push, ECS update-service/describe, CloudWatch logs
+- [X] Sin claves estáticas — solo role assumption (CA-07)
 - **Estimación:** 1h | **Dependencia:** EJEC-02
 
 ---

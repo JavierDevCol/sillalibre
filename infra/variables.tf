@@ -112,3 +112,19 @@ variable "enable_versioning" {
   type        = bool
   default     = true
 }
+
+# ============================================
+# VARIABLES CI/CD (HU-ENA-0-03)
+# ============================================
+
+variable "ecr_services" {
+  description = "Servicios con repositorio ECR propio"
+  type        = list(string)
+  default     = ["patron"]
+}
+
+variable "github_repository" {
+  description = "Repositorio GitHub autorizado para asumir el rol OIDC (owner/repo)"
+  type        = string
+  default     = "JavierDevCol/sillalibre"
+}

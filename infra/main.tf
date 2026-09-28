@@ -45,15 +45,17 @@ provider "aws" {
   }
 
   endpoints {
-    s3                = "http://localhost:4566"
-    dynamodb          = "http://localhost:4566"
-    iam               = "http://localhost:4566"
-    sts               = "http://localhost:4566"
-    kms               = "http://localhost:4566"
-    rds               = "http://localhost:4566"
-    ec2               = "http://localhost:4566"
-    cloudwatch        = "http://localhost:4566"
-    logs              = "http://localhost:4566"
+    s3         = "http://localhost:4566"
+    dynamodb   = "http://localhost:4566"
+    iam        = "http://localhost:4566"
+    sts        = "http://localhost:4566"
+    kms        = "http://localhost:4566"
+    rds        = "http://localhost:4566"
+    ec2        = "http://localhost:4566"
+    cloudwatch = "http://localhost:4566"
+    logs       = "http://localhost:4566"
+    ecr        = "http://localhost:4566"
+    ecs        = "http://localhost:4566"
   }
 
   skip_credentials_validation = true
@@ -86,7 +88,7 @@ module "backend" {
 module "kms" {
   source = "./modules/kms"
 
-  environment       = var.environment
+  environment         = var.environment
   enable_key_rotation = true
 }
 
@@ -103,31 +105,65 @@ module "vpc" {
 module "rds" {
   source = "./modules/rds"
 
-  environment          = var.environment
-  project_name         = var.project_name
-  instance_class       = var.instance_class
-  allocated_storage    = var.allocated_storage
-  max_allocated_storage = var.max_allocated_storage
+  environment             = var.environment
+  project_name            = var.project_name
+  instance_class          = var.instance_class
+  allocated_storage       = var.allocated_storage
+  max_allocated_storage   = var.max_allocated_storage
   backup_retention_period = var.backup_retention_period
-  max_connections      = var.max_connections
-  deletion_protection  = var.deletion_protection
-  skip_final_snapshot  = var.skip_final_snapshot
-  db_password          = var.db_password
-  vpc_id               = module.vpc.vpc_id
-  vpc_cidr             = module.vpc.vpc_cidr
-  private_subnet_ids   = module.vpc.private_subnet_ids
-  kms_key_arn          = module.kms.key_arn
+  max_connections         = var.max_connections
+  deletion_protection     = var.deletion_protection
+  skip_final_snapshot     = var.skip_final_snapshot
+  db_password             = var.db_password
+  vpc_id                  = module.vpc.vpc_id
+  vpc_cidr                = module.vpc.vpc_cidr
+  private_subnet_ids      = module.vpc.private_subnet_ids
+  kms_key_arn             = module.kms.key_arn
 }
 
 module "s3" {
   source = "./modules/s3"
 
-  bucket_name           = "${var.project_name}-${var.environment}-assets"
-  environment           = var.environment
-  project_name          = var.project_name
-  enable_versioning     = var.enable_versioning
-  kms_key_arn           = module.kms.key_arn
-  vpc_id                = module.vpc.vpc_id
+  bucket_name             = "${var.project_name}-${var.environment}-assets"
+  environment             = var.environment
+  project_name            = var.project_name
+  enable_versioning       = var.enable_versioning
+  kms_key_arn             = module.kms.key_arn
+  vpc_id                  = module.vpc.vpc_id
   private_route_table_ids = [module.vpc.private_route_table_id]
-  aws_region            = var.aws_region
+  aws_region              = var.aws_region
+}
+
+# --- HU-ENA-0-03: infraestructura de deploy ---
+
+module "ecr" {
+  source = "./modules/ecr"
+
+  environment  = var.environment
+  project_name = var.project_name
+  services     = var.ecr_services
+}
+
+module "ecs" {
+  source = "./modules/ecs"
+
+  environment        = var.environment
+  project_name       = var.project_name
+  aws_region         = var.aws_region
+  vpc_id             = module.vpc.vpc_id
+  vpc_cidr           = var.vpc_cidr
+  private_subnet_ids = module.vpc.private_subnet_ids
+}
+
+module "oidc_role" {
+  source = "./modules/oidc-role"
+
+  environment         = var.environment
+  project_name        = var.project_name
+  github_repository   = var.github_repository
+  ecr_repository_arns = values(module.ecr.repository_arns)
+  task_role_arns = [
+    module.ecs.task_execution_role_arn,
+    module.ecs.task_role_arn
+  ]
 }
