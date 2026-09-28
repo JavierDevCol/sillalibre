@@ -17,6 +17,7 @@
 | **Origen** | Blueprint §6 Gap #7 · Visión §15.5 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [ ] Pendiente |
 
 ## Descripción
 

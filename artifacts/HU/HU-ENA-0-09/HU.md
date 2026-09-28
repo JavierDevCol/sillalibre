@@ -17,6 +17,7 @@
 | **Origen** | ADR-001 F0 · ADR-008 · Solicitado por PO |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 

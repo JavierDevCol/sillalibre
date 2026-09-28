@@ -17,6 +17,7 @@
 | **Origen** | `arquitectura_aws` §4 · ADR-001 F0 · ADR-008 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 
@@ -32,7 +33,7 @@
 
 | Tipo | Referencia | Estado |
 |------|------------|--------|
-| HU previa | HU-ENA-0-02 (Terraform/docker-compose) | ⏳ Pendiente |
+| HU previa | HU-ENA-0-02 (Terraform/docker-compose) | ✅ Completado |
 
 ## Notas
 

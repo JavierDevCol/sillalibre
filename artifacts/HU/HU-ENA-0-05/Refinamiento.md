@@ -105,7 +105,7 @@
 
 | Tipo | Referencia | Estado |
 |------|------------|--------|
-| HU previa | HU-ENA-0-02 (Terraform/docker-compose) | ⏳ Pendiente |
+| HU previa | HU-ENA-0-02 (Terraform/docker-compose) | ✅ Completado |
 
 ---
 

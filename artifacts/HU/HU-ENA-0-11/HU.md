@@ -17,6 +17,7 @@
 | **Origen** | Blueprint §6 Gap #8 · Visión §15.2 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 

@@ -17,6 +17,7 @@
 | **Origen** | ADR-002 · Auditoría #2, #5, #8 🔴🟠 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 

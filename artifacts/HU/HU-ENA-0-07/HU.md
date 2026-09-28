@@ -17,6 +17,7 @@
 | **Origen** | Visión §14.2 · Backlog ENA-0-07 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 

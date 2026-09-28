@@ -17,6 +17,7 @@
 | **Origen** | ADR-003 §CI/CD · Auditoría #4 🟠 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 
@@ -32,7 +33,7 @@
 
 | Tipo | Referencia | Estado |
 |------|------------|--------|
-| HU previa | HU-ENA-0-02 (Terraform) | ⏳ Pendiente |
+| HU previa | HU-ENA-0-02 (Terraform) | ✅ Completado |
 | Decisión | ADR-003 (CI/CD) | ✅ Aprobado |
 
 ## Notas

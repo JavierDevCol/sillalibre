@@ -112,7 +112,7 @@
 
 | Tipo | Referencia | Estado |
 |------|------------|--------|
-| HU previa | HU-ENA-0-02 (Terraform) | ⏳ Pendiente |
+| HU previa | HU-ENA-0-02 (Terraform) | ✅ Completado |
 | Decisión | ADR-003 | ✅ Aprobado |
 
 ---

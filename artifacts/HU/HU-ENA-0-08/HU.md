@@ -17,6 +17,7 @@
 | **Origen** | Auditoría QW (gates) · Backlog ENA-0-08 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 

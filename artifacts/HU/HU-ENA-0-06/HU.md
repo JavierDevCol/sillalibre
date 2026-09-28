@@ -17,6 +17,7 @@
 | **Origen** | ADR-002 §Validación · Auditoría #10 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
+| **Estado** | [R] Refinada |
 
 ## Descripción
 
