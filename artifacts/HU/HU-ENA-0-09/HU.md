@@ -7,6 +7,7 @@
 | **ID** | HU-ENA-0-09 |
 | **Título** | Scaffold Base de los 8 Microservicios |
 | **Tipo** | Enabler |
+| **Sprint** | S0-C |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
 | **Complejidad** | 🔴 ALTO |

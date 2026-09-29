@@ -7,6 +7,7 @@
 | **ID** | ENA-0-11 |
 | **Título** | Spike Cumplimiento Ley 1581 de 2012 |
 | **Tipo** | Spike-Enabler |
+| **Sprint** | S0-C |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
 | **Complejidad** | 🟢 BAJO |
