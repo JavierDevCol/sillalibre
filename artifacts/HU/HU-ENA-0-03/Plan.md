@@ -18,7 +18,7 @@ validado_por: ">validar_ca"
 | **Arquitectura** | Capas (Infra → Pipeline → Deploy) |
 | **Generado por** | ArchDev Pro |
 | **Fecha creación** | 2026-09-28 |
-| **Última actualización** | 2026-09-28 |
+| **Última actualización** | 2026-09-29 |
 | **Estimación total** | 14 horas |
 | **Estado** | EN_PROGRESO |
 | **Modo** | Plano |
@@ -32,8 +32,8 @@ validado_por: ">validar_ca"
 | Fase 2: Workflow base | ✅ Completada | 3/3 tareas |
 | Fase 3: Seguridad | ✅ Completada | 2/2 tareas |
 | Fase 4: Deploy | ✅ Completada | 2/2 tareas |
-| Fase 5: Testing / Validación de pipeline | ⬜ Pendiente | 0/1 tareas |
-| Fase Final: Validación CA | ⬜ Pendiente | 0/9 criterios |
+| Fase 5: Testing / Validación de pipeline | ✅ Completada | 1/1 tareas |
+| Fase Final: Validación CA | 🔄 En curso | 4/9 verificados · 5 parciales (ENA-0-04) |
 
 ---
 
@@ -122,12 +122,26 @@ validado_por: ">validar_ca"
 
 ### Pruebas E2E del workflow
 
-#### EJEC-11: Validación del fail-gate y del OIDC [PENDIENTE]
-- [ ] PR de prueba → pipeline corre completo (checkout → tests → build → scan → SBOM)
-- [ ] PR con imagen vulnerable intencional → pipeline **falla** en Trivy (CA-02, requisito de ADR-009)
-- [ ] Log de `configure-aws-credentials` muestra role assumption sin keys (CA-07)
-- [ ] Artifact SBOM visible con retención 90 días (CA-03)
+#### EJEC-11: Validación del fail-gate y del OIDC [EJECUTADA]
+- [X] Pipeline corre completo vía `workflow_dispatch` (checkout → scan → SBOM → deploy) — Run 4
+- [X] Imagen vulnerable (`nginx:alpine`) → pipeline **falla** en Trivy (CA-02) — Runs 1-2
+- [X] Log de `configure-aws-credentials` muestra role assumption sin keys (CA-07) — Run 3+
+- [X] Artifact SBOM visible con retención 90 días (CA-03) — `sbom-patron-<sha>` (8.7 KB)
 - **Estimación:** 1h | **Dependencia:** EJEC-06, EJEC-08, EJEC-10
+
+**Evidencia de corridas (runner self-hosted `floci-runner`):**
+
+| Run | Imagen | `deploy_prod` | Resultado | Evidencia |
+|-----|--------|:---:|-----------|-----------|
+| 1 | `nginx:alpine` | true | security ❌ | tag inválido trivy-action → corregido a `v0.36.0` |
+| 2 | `nginx:alpine` | true | security ❌ | **CA-02:** `Total: 1 (HIGH: 1)` (CVE expat) → fail-gate exit 1 |
+| 3 | `nginx:alpine-slim` | true | deploy-dev ✅ / deploy-prod ❌ | family prod no existía aún → se aplicó workspace `prod` |
+| 4 | `nginx:alpine-slim` | true | **✅ verde total** | security + deploy-dev + deploy-prod success (**CA-06 positivo**) |
+| 5 | `nginx:alpine-slim` | false | deploy-prod **skipped** | **CA-06 negativo:** sin input no hay deploy a prod |
+
+**Estado final en floci:** cluster `sillalibre-dev` y `sillalibre-prod` → servicio `patron` **ACTIVE 1/1**, task-def `:4` con imagen `nginx:alpine-slim`, contenedores `floci-ecs-*` corriendo.
+
+> ⚠️ **Drift conocido (floci, no del código):** `terraform plan` en ambos workspaces **ejecuta sin errores**, pero propone reemplazar la task definition porque floci **no persiste `containerDefinitions[].healthCheck`** (y normaliza campos de RDS/S3). No aplicar desde TF después de un deploy del pipeline: revierte la imagen al baseline `var.image`.
 
 ---
 
@@ -140,12 +154,12 @@ validado_por: ">validar_ca"
 | CA | Resumen | Verificado |
 |----|---------|:----------:|
 | CA-01 | Pipeline completo PR → deploy dev | [~] Parcial — cierre con servicio patrón en **ENA-0-04** (decisión Q3-A) |
-| CA-02 | Trivy CRITICAL/HIGH → check failed | [ ] |
-| CA-03 | SBOM artifact retención 90 días | [ ] |
+| CA-02 | Trivy CRITICAL/HIGH → check failed | [X] — Runs 1-2 (HIGH real en `nginx:alpine` → exit 1) |
+| CA-03 | SBOM artifact retención 90 días | [X] — artifact `sbom-patron-<sha>` subido ANTES del gate |
 | CA-04 | Build Java con Gradle + cache | [~] Parcial — cierre en **ENA-0-04/ENA-0-09** (sin código Java aún) |
 | CA-05 | Build Go con cache de modules | [~] Parcial — cierre en **ENA-0-09** (servicio `notificacion`) |
-| CA-06 | dev automático / prod aprobación manual | [ ] |
-| CA-07 | OIDC sin claves estáticas | [ ] |
+| CA-06 | dev automático / prod aprobación manual | [X] — Run 4 (true→ambos) / Run 5 (false→prod skipped) |
+| CA-07 | OIDC sin claves estáticas | [X] — `configure-aws-credentials` + role assumption OK contra floci |
 | CA-08 | tests/build fallan → check failed | [~] Parcial — cierre con servicio en **ENA-0-04** |
 | CA-09 | Health check falla → rollback ECS | [~] Parcial — revert real requiere servicio en **ENA-0-04** |
 
@@ -153,11 +167,13 @@ validado_por: ">validar_ca"
 
 ### Validación Final
 
-- [ ] `terraform plan` sin errores (workspaces `dev` y `prod`)
-- [ ] Workflow verde con `workflow_dispatch`
-- [ ] Prueba de fail-gate con imagen vulnerable (requisito ADR-009)
-- [ ] Sin Access Keys en logs ni en variables del repo
+- [X] `terraform plan` sin errores (workspaces `dev` y `prod`)*
+- [X] Workflow verde con `workflow_dispatch` (Run 4)
+- [X] Prueba de fail-gate con imagen vulnerable (Runs 1-2, requisito ADR-009)
+- [X] Sin Access Keys en logs ni en variables del repo (OIDC exclusivo)
 - [ ] Revisión de código completada
+
+> \* Plan ejecuta sin errores; drift residual de floci documentado en EJEC-11.
 
 ---
 
