@@ -6,11 +6,11 @@
 |-------|-------|
 | **HU** | HU-ENA-0-03 |
 | **Inicio** | 2026-09-28 |
-| **Estado** | EN_PROGRESO |
+| **Estado** | FINALIZADO |
 | **Modo ejecución** | fase_por_fase |
 | **Rama de trabajo** | hu-HU-ENA-0-03-pipeline-cicd |
-| **Progreso** | 100% (11/11 tareas) — fases 1-5 completadas |
-| **Sección actual** | 6/6 - Fase Final: Validación CA |
+| **Progreso** | 100% (11/11 tareas) — fases 1-5 + Fase Final completadas |
+| **Sección actual** | ✅ Completa |
 | **Última actualización** | 2026-09-29 |
 
 ---
@@ -26,6 +26,9 @@
 | 2026-09-28 | EJEC-09..10 | Fase 4 completada | ✅ jobs deploy-dev (auto en main, environment dev) y deploy-prod (environment prod = approval gate); YAML validado | 20min |
 | 2026-09-29 | EJEC-11 | Config GitHub + runner | ✅ vars/environments del repo, runner self-hosted `floci-runner` online, 5 corridas E2E | 90min |
 | 2026-09-29 | EJEC-11 | Fase 5 completada | ✅ Run 4 verde total (CA-06/07), Runs 1-2 fail-gate real (CA-02), SBOM artifact (CA-03), Run 5 prod skipped; workspace `prod` aplicado | 45min |
+| 2026-09-29 | — | Validación CA (2 pasadas) | ✅ 4/9 CUMPLIDO, 5/9 PARCIAL delegados ENA-0-04 (Q3-A); correcciones de trazabilidad aplicadas | 30min |
+| 2026-09-29 | — | Revisión de código + fixes | ✅ analizar-calidad-codigo (0 críticos, 10 hallazgos corregidos en fd0fe56); smoke run 36536412133 verde | 60min |
+| 2026-09-29 | — | **HU COMPLETADA** | ✅ Cierre aprobado por usuario; 11 tasks, 7 corridas de pipeline E2E | — |
 
 ---
 
@@ -56,12 +59,12 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Fin** | — |
-| **Duración total** | — |
-| **Commit final** | — |
-| **Tests ejecutados** | — |
-| **Tests pasaron** | — |
-| **Cobertura** | — |
+| **Fin** | 2026-09-29 |
+| **Duración total** | ~5h |
+| **Commit final** | feat(HU-ENA-0-03): implementación completa de Pipeline Patrón CI/CD |
+| **Tests ejecutados** | 7 corridas de pipeline E2E (Runs 1-6 + smoke) en `floci-runner` |
+| **Tests pasaron** | ✅ (Run 4, 5 y 6 verdes; 1-2 fail-gate intencional, 3 corrección infra) |
+| **Cobertura** | N/A — sin código de servicio (tests/build delegados a ENA-0-04, Q3-A) |
 
 ---
 

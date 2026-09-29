@@ -20,7 +20,7 @@ validado_por: ">validar_ca"
 | **Fecha creación** | 2026-09-28 |
 | **Última actualización** | 2026-09-29 |
 | **Estimación total** | 14 horas |
-| **Estado** | EN_PROGRESO |
+| **Estado** | COMPLETADO |
 | **Modo** | Plano |
 | **Tasks** | — |
 
@@ -33,7 +33,7 @@ validado_por: ">validar_ca"
 | Fase 3: Seguridad | ✅ Completada | 2/2 tareas |
 | Fase 4: Deploy | ✅ Completada | 2/2 tareas |
 | Fase 5: Testing / Validación de pipeline | ✅ Completada | 1/1 tareas |
-| Fase Final: Validación CA | 🔄 En curso | 4/9 verificados · 5 parciales (ENA-0-04) |
+| Fase Final: Validación CA | ✅ Completada | 4/9 CUMPLIDO · 5/9 `[~]` delegados a ENA-0-04 (Q3-A) |
 
 ---
 

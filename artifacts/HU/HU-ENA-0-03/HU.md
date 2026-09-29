@@ -17,7 +17,7 @@
 | **Origen** | ADR-003 §CI/CD · Auditoría #4 🟠 |
 | **Padre** | — |
 | **Impl Proyecto** | — |
-| **Estado** | [E] En Ejecución |
+| **Estado** | [X] Completada |
 
 ## Descripción
 
