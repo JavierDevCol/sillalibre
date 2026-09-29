@@ -32,9 +32,14 @@ terraform {
 # PROVIDER
 # ============================================
 
+locals {
+  # floci: emulador AWS local — un solo literal para todos los endpoints
+  floci_endpoint = "http://localhost:4566"
+}
+
 provider "aws" {
   region  = var.aws_region
-  profile = "floci"
+  profile = var.use_floci ? "floci" : null
 
   default_tags {
     tags = {
@@ -45,17 +50,17 @@ provider "aws" {
   }
 
   endpoints {
-    s3         = "http://localhost:4566"
-    dynamodb   = "http://localhost:4566"
-    iam        = "http://localhost:4566"
-    sts        = "http://localhost:4566"
-    kms        = "http://localhost:4566"
-    rds        = "http://localhost:4566"
-    ec2        = "http://localhost:4566"
-    cloudwatch = "http://localhost:4566"
-    logs       = "http://localhost:4566"
-    ecr        = "http://localhost:4566"
-    ecs        = "http://localhost:4566"
+    s3         = var.use_floci ? local.floci_endpoint : null
+    dynamodb   = var.use_floci ? local.floci_endpoint : null
+    iam        = var.use_floci ? local.floci_endpoint : null
+    sts        = var.use_floci ? local.floci_endpoint : null
+    kms        = var.use_floci ? local.floci_endpoint : null
+    rds        = var.use_floci ? local.floci_endpoint : null
+    ec2        = var.use_floci ? local.floci_endpoint : null
+    cloudwatch = var.use_floci ? local.floci_endpoint : null
+    logs       = var.use_floci ? local.floci_endpoint : null
+    ecr        = var.use_floci ? local.floci_endpoint : null
+    ecs        = var.use_floci ? local.floci_endpoint : null
   }
 
   skip_credentials_validation = true
@@ -68,9 +73,6 @@ provider "aws" {
 # ============================================
 
 data "aws_caller_identity" "current" {}
-data "aws_availability_zones" "available" {
-  state = "available"
-}
 
 # ============================================
 # MODULES

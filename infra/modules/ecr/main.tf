@@ -1,14 +1,14 @@
 # ============================================
 # ECR: Repositorios de Imágenes
 # ============================================
-# Un repositorio por servicio, naming `sillalibre/<servicio>`.
+# Un repositorio por servicio, naming `sillalibre/<ambiente>/<servicio>`.
 # El pipeline (HU-ENA-0-03) pushea con tag = git SHA.
 # ============================================
 
 resource "aws_ecr_repository" "this" {
   for_each = toset(var.services)
 
-  name                 = "${var.project_name}/${each.value}"
+  name                 = "${var.project_name}/${var.environment}/${each.value}"
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {

@@ -39,9 +39,7 @@ resource "aws_cloudwatch_log_group" "patron" {
 
 # --- IAM ---
 
-resource "aws_iam_role" "task_execution" {
-  name = "${var.project_name}-${var.environment}-ecs-task-execution"
-
+locals {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -50,6 +48,12 @@ resource "aws_iam_role" "task_execution" {
       Action    = "sts:AssumeRole"
     }]
   })
+}
+
+resource "aws_iam_role" "task_execution" {
+  name = "${var.project_name}-${var.environment}-ecs-task-execution"
+
+  assume_role_policy = local.assume_role_policy
 
   tags = { ManagedBy = "terraform" }
 }
@@ -62,14 +66,7 @@ resource "aws_iam_role_policy_attachment" "task_execution" {
 resource "aws_iam_role" "task" {
   name = "${var.project_name}-${var.environment}-ecs-task"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "ecs-tasks.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
+  assume_role_policy = local.assume_role_policy
 
   tags = { ManagedBy = "terraform" }
 }

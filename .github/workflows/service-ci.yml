@@ -3,9 +3,10 @@
 # ------------------------------------------------------------
 # Workflow reutilizable parametrizado por servicio.
 # Los callers (uno por servicio) hacen `uses: ./...service-ci.yml`.
-# Requiere variables de repositorio:
-#   vars.AWS_ROLE_ARN   → rol OIDC (terraform output github_actions_role_arn)
-#   vars.AWS_REGION     → región AWS (default us-east-1)
+# Requiere variables de repositorio / environment:
+#   vars.AWS_ROLE_ARN    → rol OIDC (terraform output github_actions_role_arn)
+#   vars.AWS_REGION      → región AWS (opcional; fallback AWS_REGION_DEFAULT)
+#   vars.ECR_REPOSITORY  → repo ECR por environment (sillalibre/<env>/<servicio>)
 # ============================================================
 name: Service CI/CD
 
@@ -43,15 +44,19 @@ permissions:
   contents: read
   id-token: write # OIDC — cero claves estáticas (CA-07)
 
+# Defaults centralizados (calidad: defaults ×15).
+# Nota: el contexto `env` NO está disponible en `env:` de workflow ni de job
+# (docs GitHub → "Context availability"), por eso `inputs.*` se resuelve aquí
+# una sola vez y el resto del workflow usa ${{ env.SERVICE | env.SERVICE_LANG |
+# env.DEFAULT_IMAGE | env.AWS_REGION_DEFAULT }} donde sí hay contexto env.
 env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
-  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
-  # floci: emulador AWS local — toda llamada AWS va a localhost:4566
-  AWS_ENDPOINT_URL: http://localhost:4566
   SERVICE: ${{ inputs.servicio || 'patron' }}
-  LANG: ${{ inputs.lenguaje || 'go' }}
-  SERVICE_DIR: services/${{ inputs.servicio || 'patron' }}
-  ECR_REPOSITORY: sillalibre/${{ inputs.servicio || 'patron' }}
+  SERVICE_LANG: ${{ inputs.lenguaje || 'go' }}
+  DEFAULT_IMAGE: nginx:alpine
+  AWS_REGION_DEFAULT: us-east-1
+  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+  # floci (transitorio): quitar al migrar a AWS real — emulador local localhost:4566
+  AWS_ENDPOINT_URL: http://localhost:4566
 
 jobs:
   # --------------------------------------------------------
@@ -71,12 +76,12 @@ jobs:
       - name: Check código y Dockerfile
         id: check
         run: |
-          if [ -n "$(find "$SERVICE_DIR" \( -name '*.go' -o -name '*.java' -o -name 'go.mod' -o -name 'build.gradle*' \) -print -quit 2>/dev/null)" ]; then
+          if [ -n "$(find "services/$SERVICE" \( -name '*.go' -o -name '*.java' -o -name 'go.mod' -o -name 'build.gradle*' \) -print -quit 2>/dev/null)" ]; then
             echo "has_code=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_code=false" >> "$GITHUB_OUTPUT"
           fi
-          if [ -f "$SERVICE_DIR/Dockerfile" ]; then
+          if [ -f "services/$SERVICE/Dockerfile" ]; then
             echo "has_dockerfile=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_dockerfile=false" >> "$GITHUB_OUTPUT"
@@ -86,17 +91,25 @@ jobs:
   # Tests unitarios (CA-08: si fallan, el check queda failed)
   # --------------------------------------------------------
   tests:
+    # `env` no está disponible en jobs.<id>.name → se mantiene inputs.lenguaje
     name: Tests (${{ inputs.lenguaje || 'go' }})
     needs: detect
     if: needs.detect.outputs.has_code == 'true'
     runs-on: self-hosted
     steps:
+      - name: Validar lenguaje soportado
+        run: |
+          if [ "$SERVICE_LANG" != "java" ] && [ "$SERVICE_LANG" != "go" ]; then
+            echo "Lenguaje no soportado: $SERVICE_LANG"
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
       # --- Java (Gradle + cache) ---
       - name: Setup Java 21 (Gradle cache)
-        if: env.LANG == 'java'
+        if: env.SERVICE_LANG == 'java'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -104,31 +117,35 @@ jobs:
           cache: gradle
 
       - name: Gradle test
-        if: env.LANG == 'java'
-        working-directory: ${{ env.SERVICE_DIR }}
+        if: env.SERVICE_LANG == 'java'
+        working-directory: services/${{ env.SERVICE }}
         run: ./gradlew test --no-daemon
 
       # --- Go (module cache) ---
       - name: Setup Go (module cache)
-        if: env.LANG == 'go'
+        if: env.SERVICE_LANG == 'go'
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
           cache-dependency-path: services/*/go.mod
 
       - name: Go test
-        if: env.LANG == 'go'
-        working-directory: ${{ env.SERVICE_DIR }}
+        if: env.SERVICE_LANG == 'go'
+        working-directory: services/${{ env.SERVICE }}
         run: go test ./...
 
   # --------------------------------------------------------
   # Build imagen Docker → push a ECR (CA-01)
+  # environment: dev → vars.ECR_REPOSITORY = sillalibre/dev/<servicio>
   # --------------------------------------------------------
   build:
     name: Build & push ECR
     needs: [detect, tests]
     if: needs.detect.outputs.has_dockerfile == 'true' && needs.tests.result == 'success'
     runs-on: self-hosted
+    environment: dev
+    env:
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
     outputs:
       image: ${{ steps.image.outputs.image }}
     steps:
@@ -139,7 +156,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
 
       - name: Login to ECR
         id: ecr
@@ -151,7 +168,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}"
-          docker build -t "$IMAGE" "$SERVICE_DIR"
+          docker build -t "$IMAGE" "services/$SERVICE"
           docker push "$IMAGE"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
@@ -166,13 +183,15 @@ jobs:
     if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: self-hosted
     env:
-      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
+      # `env` no está disponible en jobs.<id>.env → el default vive en
+      # DEFAULT_IMAGE y se aplica al usarlo (steps sí tienen contexto env).
+      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image }}
     steps:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -180,7 +199,7 @@ jobs:
       - name: Generate SBOM (CycloneDX)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.TARGET_IMAGE }}
+          image-ref: ${{ env.TARGET_IMAGE || env.DEFAULT_IMAGE }}
           format: cyclonedx
           output: sbom.cdx.json
           exit-code: "0"
@@ -195,7 +214,7 @@ jobs:
       - name: Trivy fail-gate (CRITICAL/HIGH bloquea)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.TARGET_IMAGE }}
+          image-ref: ${{ env.TARGET_IMAGE || env.DEFAULT_IMAGE }}
           format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
@@ -218,39 +237,24 @@ jobs:
     runs-on: self-hosted
     environment: dev
     env:
-      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
       ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
       ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
-      ECS_SERVICE: ${{ inputs.servicio || 'patron' }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
 
       - name: Register task definition con imagen nueva
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition "$ECS_TASK_FAMILY" \
-            --query taskDefinition > taskdef.json
-          jq --arg img "$TARGET_IMAGE" \
-            '.containerDefinitions[0].image = $img
-             | del(.taskDefinitionArn, .revision, .status,
-                   .requiresAttributes, .compatibilities,
-                   .registeredAt, .registeredBy)' \
-            taskdef.json > taskdef-new.json
-          aws ecs register-task-definition \
-            --cli-input-json file://taskdef-new.json
-
-      - name: ECS rolling update
-        run: |
-          aws ecs update-service \
-            --cluster "$ECS_CLUSTER" \
-            --service "$ECS_SERVICE" \
-            --task-definition "$ECS_TASK_FAMILY" \
-            --force-new-deployment
+        env:
+          TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || env.DEFAULT_IMAGE }}
+          ECS_SERVICE: ${{ env.SERVICE }}
+        run: bash .github/scripts/deploy-ecs.sh
 
   # --------------------------------------------------------
   # Deploy prod: aprobación manual = disparo explícito con
@@ -268,36 +272,21 @@ jobs:
     runs-on: self-hosted
     environment: prod
     env:
-      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
       ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
       ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
-      ECS_SERVICE: ${{ inputs.servicio || 'patron' }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
 
       - name: Register task definition con imagen nueva
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition "$ECS_TASK_FAMILY" \
-            --query taskDefinition > taskdef.json
-          jq --arg img "$TARGET_IMAGE" \
-            '.containerDefinitions[0].image = $img
-             | del(.taskDefinitionArn, .revision, .status,
-                   .requiresAttributes, .compatibilities,
-                   .registeredAt, .registeredBy)' \
-            taskdef.json > taskdef-new.json
-          aws ecs register-task-definition \
-            --cli-input-json file://taskdef-new.json
-
-      - name: ECS rolling update
-        run: |
-          aws ecs update-service \
-            --cluster "$ECS_CLUSTER" \
-            --service "$ECS_SERVICE" \
-            --task-definition "$ECS_TASK_FAMILY" \
-            --force-new-deployment
+        env:
+          TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || env.DEFAULT_IMAGE }}
+          ECS_SERVICE: ${{ env.SERVICE }}
+        run: bash .github/scripts/deploy-ecs.sh

@@ -26,7 +26,7 @@
 
 ## 2. Criterios de Aceptación
 
-- [ ] **CA-01:** Dado que creo un PR, cuando el pipeline se ejecuta, entonces pasa por: checkout → tests → build (imagen Docker) → push a ECR → Trivy scan → SBOM → deploy (dev)
+- [ ] **CA-01:** Dado que creo un PR, cuando el pipeline se ejecuta, entonces pasa por: checkout → tests → build (imagen Docker) → push a ECR → SBOM → Trivy scan → deploy (dev) *(orden SBOM→Trivy enmendado: el artifact debe sobrevivir al fail-gate — EJEC-11)*
 - [X] **CA-02:** Dado que Trivy detecta un hallazgo CRITICAL o HIGH, cuando el pipeline termina, entonces el check del PR queda en `failed` (merge bloqueado por convención — sin branch protection en plan Free, ADR-009)
 - [X] **CA-03:** Dado que el build es exitoso, cuando se genera el SBOM (CycloneDX), entonces se guarda como artifact del workflow con retención de **90 días**
 - [ ] **CA-04:** Dado que el servicio es Java, cuando se ejecuta el build, entonces usa **Gradle** con cache de dependencias
