@@ -21,7 +21,7 @@
 | *(sin HUs en ejecución)* | | | | | | |
 | **🆕 NEW (Pendientes / Refinadas / Aprobadas)** |
 | ENA-0-10 | Métricas de Cobertura de Tests | [ ] Pendiente | P1 | Enabler | SillaLibre | 0 |
-| ENA-0-03 | Pipeline Patrón CI/CD | [R] Refinada | P0 | Enabler | SillaLibre | 7 |
+| ENA-0-03 | Pipeline Patrón CI/CD | [X] Completada | P0 | Enabler | SillaLibre | 10 |
 | ENA-0-04 | Monorepo + Servicio Patrón Observado | [R] Refinada | P0 | Enabler | SillaLibre | 8 |
 | ENA-0-05 | Entorno Local Reproducible | [R] Refinada | P0 | Enabler | SillaLibre | 6 |
 | ENA-0-06 | Contratos OpenAPI desde el Día 1 | [R] Refinada | P1 | Enabler | SillaLibre | 4 |

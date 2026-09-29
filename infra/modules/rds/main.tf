@@ -85,7 +85,7 @@ resource "aws_db_instance" "main" {
   allocated_storage     = var.allocated_storage
   max_allocated_storage = var.max_allocated_storage
   storage_encrypted     = true
-  kms_key_id           = var.kms_key_arn
+  kms_key_id            = var.kms_key_arn
 
   # Database
   db_name  = var.db_name
@@ -99,16 +99,16 @@ resource "aws_db_instance" "main" {
 
   # Backups
   backup_retention_period = var.backup_retention_period
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "Mon:04:00-Mon:05:00"
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "Mon:04:00-Mon:05:00"
 
   # Monitoring
   enabled_cloudwatch_logs_exports = ["postgresql"]
   performance_insights_enabled    = true
 
   # Protection
-  deletion_protection = var.deletion_protection
-  skip_final_snapshot = var.skip_final_snapshot
+  deletion_protection       = var.deletion_protection
+  skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.project_name}-${var.environment}-final-snapshot"
 
   # Parameter group

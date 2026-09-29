@@ -112,3 +112,39 @@ variable "enable_versioning" {
   type        = bool
   default     = true
 }
+
+# ============================================
+# VARIABLES CI/CD (HU-ENA-0-03)
+# ============================================
+
+variable "ecr_services" {
+  description = "Servicios con repositorio ECR propio"
+  type        = list(string)
+  default     = ["patron"]
+
+  validation {
+    condition = (
+      length(var.ecr_services) > 0 &&
+      alltrue([for s in var.ecr_services : can(regex("^[a-z0-9-]+$", s))])
+    )
+    error_message = "ecr_services debe ser una lista no vacía y cada servicio cumplir ^[a-z0-9-]+$."
+  }
+}
+
+variable "github_repository" {
+  description = "Repositorio GitHub autorizado para asumir el rol OIDC (owner/repo)"
+  type        = string
+  default     = "JavierDevCol/sillalibre"
+}
+
+variable "create_oidc_provider" {
+  description = "Crear el provider OIDC de GitHub (global de cuenta — solo en un workspace)"
+  type        = bool
+  default     = true
+}
+
+variable "use_floci" {
+  description = "true = usar el emulador local floci (profile + endpoints localhost); false = AWS real"
+  type        = bool
+  default     = false
+}

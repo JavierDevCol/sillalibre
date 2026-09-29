@@ -1,0 +1,292 @@
+# ============================================================
+# Service CI/CD (HU-ENA-0-03 · patrón ADR-009)
+# ------------------------------------------------------------
+# Workflow reutilizable parametrizado por servicio.
+# Los callers (uno por servicio) hacen `uses: ./...service-ci.yml`.
+# Requiere variables de repositorio / environment:
+#   vars.AWS_ROLE_ARN    → rol OIDC (terraform output github_actions_role_arn)
+#   vars.AWS_REGION      → región AWS (opcional; fallback AWS_REGION_DEFAULT)
+#   vars.ECR_REPOSITORY  → repo ECR por environment (sillalibre/<env>/<servicio>)
+# ============================================================
+name: Service CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      servicio:
+        description: "Nombre del servicio (carpeta services/<servicio>)"
+        type: string
+        required: true
+      lenguaje:
+        description: "Stack del servicio: java | go"
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      servicio:
+        description: "Servicio a ejecutar"
+        type: string
+        default: patron
+      lenguaje:
+        description: "Stack: java | go"
+        type: string
+        default: go
+      image:
+        description: "Imagen a escanear cuando no hay código de servicio (validación del fail-gate)"
+        type: string
+        default: "nginx:alpine"
+      deploy_prod:
+        description: "Aprobación manual de prod: marca para desplegar a prod tras el deploy dev"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # OIDC — cero claves estáticas (CA-07)
+
+# Defaults centralizados (calidad: defaults ×15).
+# Nota: el contexto `env` NO está disponible en `env:` de workflow ni de job
+# (docs GitHub → "Context availability"), por eso `inputs.*` se resuelve aquí
+# una sola vez y el resto del workflow usa ${{ env.SERVICE | env.SERVICE_LANG |
+# env.DEFAULT_IMAGE | env.AWS_REGION_DEFAULT }} donde sí hay contexto env.
+env:
+  SERVICE: ${{ inputs.servicio || 'patron' }}
+  SERVICE_LANG: ${{ inputs.lenguaje || 'go' }}
+  DEFAULT_IMAGE: nginx:alpine
+  AWS_REGION_DEFAULT: us-east-1
+  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+  # floci (transitorio): quitar al migrar a AWS real — emulador local localhost:4566
+  AWS_ENDPOINT_URL: http://localhost:4566
+
+jobs:
+  # --------------------------------------------------------
+  # Detección de código del servicio — hashFiles no está
+  # permitido en if de job, se resuelve con outputs (CA-08)
+  # --------------------------------------------------------
+  detect:
+    name: Detectar código del servicio
+    runs-on: self-hosted
+    outputs:
+      has_code: ${{ steps.check.outputs.has_code }}
+      has_dockerfile: ${{ steps.check.outputs.has_dockerfile }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check código y Dockerfile
+        id: check
+        run: |
+          if [ -n "$(find "services/$SERVICE" \( -name '*.go' -o -name '*.java' -o -name 'go.mod' -o -name 'build.gradle*' \) -print -quit 2>/dev/null)" ]; then
+            echo "has_code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_code=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f "services/$SERVICE/Dockerfile" ]; then
+            echo "has_dockerfile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_dockerfile=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # --------------------------------------------------------
+  # Tests unitarios (CA-08: si fallan, el check queda failed)
+  # --------------------------------------------------------
+  tests:
+    # `env` no está disponible en jobs.<id>.name → se mantiene inputs.lenguaje
+    name: Tests (${{ inputs.lenguaje || 'go' }})
+    needs: detect
+    if: needs.detect.outputs.has_code == 'true'
+    runs-on: self-hosted
+    steps:
+      - name: Validar lenguaje soportado
+        run: |
+          if [ "$SERVICE_LANG" != "java" ] && [ "$SERVICE_LANG" != "go" ]; then
+            echo "Lenguaje no soportado: $SERVICE_LANG"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- Java (Gradle + cache) ---
+      - name: Setup Java 21 (Gradle cache)
+        if: env.SERVICE_LANG == 'java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Gradle test
+        if: env.SERVICE_LANG == 'java'
+        working-directory: services/${{ env.SERVICE }}
+        run: ./gradlew test --no-daemon
+
+      # --- Go (module cache) ---
+      - name: Setup Go (module cache)
+        if: env.SERVICE_LANG == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: services/*/go.mod
+
+      - name: Go test
+        if: env.SERVICE_LANG == 'go'
+        working-directory: services/${{ env.SERVICE }}
+        run: go test ./...
+
+  # --------------------------------------------------------
+  # Build imagen Docker → push a ECR (CA-01)
+  # environment: dev → vars.ECR_REPOSITORY = sillalibre/dev/<servicio>
+  # --------------------------------------------------------
+  build:
+    name: Build & push ECR
+    needs: [detect, tests]
+    if: needs.detect.outputs.has_dockerfile == 'true' && needs.tests.result == 'success'
+    runs-on: self-hosted
+    environment: dev
+    env:
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}"
+          docker build -t "$IMAGE" "services/$SERVICE"
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  # --------------------------------------------------------
+  # Seguridad: SBOM + Trivy fail-gate (CA-02, CA-03)
+  # El SBOM se genera ANTES del gate para que siempre quede
+  # como artifact aunque el scan bloquee.
+  # --------------------------------------------------------
+  security:
+    name: SBOM & Trivy scan
+    needs: [detect, build]
+    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: self-hosted
+    env:
+      # `env` no está disponible en jobs.<id>.env → el default vive en
+      # DEFAULT_IMAGE y se aplica al usarlo (steps sí tienen contexto env).
+      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image }}
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.TARGET_IMAGE || env.DEFAULT_IMAGE }}
+          format: cyclonedx
+          output: sbom.cdx.json
+          exit-code: "0"
+
+      - name: Upload SBOM artifact (90 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ env.SERVICE }}-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 90
+
+      - name: Trivy fail-gate (CRITICAL/HIGH bloquea)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.TARGET_IMAGE || env.DEFAULT_IMAGE }}
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+
+  # --------------------------------------------------------
+  # Deploy dev: automático en main, ECS rolling (CA-06)
+  # Usa environment `dev` (sin reviewers) con sus vars:
+  #   ECS_CLUSTER, ECS_TASK_FAMILY
+  # --------------------------------------------------------
+  deploy-dev:
+    name: Deploy dev (ECS rolling)
+    needs: [tests, build, security]
+    # CA-08: un tests fallido (o cancelado) bloquea el deploy;
+    # 'skipped' sigue permitido (servicios aún sin código — Q3-A)
+    if: >-
+      always() &&
+      (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main') &&
+      (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
+      needs.security.result == 'success'
+    runs-on: self-hosted
+    environment: dev
+    env:
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
+
+      - name: Register task definition con imagen nueva
+        env:
+          TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || env.DEFAULT_IMAGE }}
+          ECS_SERVICE: ${{ env.SERVICE }}
+        run: bash .github/scripts/deploy-ecs.sh
+
+  # --------------------------------------------------------
+  # Deploy prod: aprobación manual = disparo explícito con
+  # input deploy_prod=true (limitación plan Free: GitHub no
+  # permite required reviewers en environments) — CA-06
+  # --------------------------------------------------------
+  deploy-prod:
+    name: Deploy prod (aprobación manual)
+    needs: [build, deploy-dev]
+    if: >-
+      always() &&
+      needs.deploy-dev.result == 'success' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.deploy_prod == true
+    runs-on: self-hosted
+    environment: prod
+    env:
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || env.AWS_REGION_DEFAULT }}
+
+      - name: Register task definition con imagen nueva
+        env:
+          TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || env.DEFAULT_IMAGE }}
+          ECS_SERVICE: ${{ env.SERVICE }}
+        run: bash .github/scripts/deploy-ecs.sh

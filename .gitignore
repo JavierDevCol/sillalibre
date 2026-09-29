@@ -55,6 +55,7 @@ logs/
 *.pem
 *.key
 secrets/
+opencode.json
 
 # --- Terraform (la IaC SÍ se versiona; su estado NO) ---
 .terraform/

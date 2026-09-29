@@ -110,3 +110,27 @@ output "s3_endpoint_id" {
   description = "ID del VPC Endpoint S3"
   value       = module.s3.endpoint_id
 }
+
+# ============================================
+# CI/CD OUTPUTS (HU-ENA-0-03)
+# ============================================
+
+output "ecr_repository_urls" {
+  description = "Mapa servicio => URL del repositorio ECR"
+  value       = module.ecr.repository_urls
+}
+
+output "ecs_cluster_name" {
+  description = "Nombre del cluster ECS"
+  value       = module.ecs.cluster_name
+}
+
+output "ecs_service_name" {
+  description = "Nombre del servicio patrón"
+  value       = module.ecs.service_name
+}
+
+output "github_actions_role_arn" {
+  description = "ARN del rol OIDC que asume GitHub Actions"
+  value       = module.oidc_role.role_arn
+}
