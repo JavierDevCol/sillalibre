@@ -42,6 +42,8 @@ permissions:
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
   AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+  # floci: emulador AWS local — toda llamada AWS va a localhost:4566
+  AWS_ENDPOINT_URL: http://localhost:4566
   SERVICE: ${{ inputs.servicio || 'patron' }}
   LANG: ${{ inputs.lenguaje || 'go' }}
   SERVICE_DIR: services/${{ inputs.servicio || 'patron' }}
@@ -54,7 +56,7 @@ jobs:
   tests:
     name: Tests (${{ inputs.lenguaje || 'go' }})
     if: hashFiles(format('services/{0}/**', inputs.servicio || 'patron')) != ''
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,7 +95,7 @@ jobs:
     name: Build & push ECR
     needs: tests
     if: hashFiles(format('services/{0}/Dockerfile', inputs.servicio || 'patron')) != ''
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       image: ${{ steps.image.outputs.image }}
     steps:
@@ -129,7 +131,7 @@ jobs:
     name: SBOM & Trivy scan
     needs: [tests, build]
     if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
     steps:
@@ -174,7 +176,7 @@ jobs:
     name: Deploy dev (ECS rolling)
     needs: [build, security]
     if: always() && github.ref == 'refs/heads/main' && needs.security.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: dev
     env:
       TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
@@ -219,7 +221,7 @@ jobs:
     name: Deploy prod (aprobación manual)
     needs: [build, deploy-dev]
     if: always() && github.ref == 'refs/heads/main' && needs.deploy-dev.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: prod
     env:
       TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
