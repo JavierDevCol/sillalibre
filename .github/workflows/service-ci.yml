@@ -55,11 +55,40 @@ env:
 
 jobs:
   # --------------------------------------------------------
+  # Detección de código del servicio — hashFiles no está
+  # permitido en if de job, se resuelve con outputs (CA-08)
+  # --------------------------------------------------------
+  detect:
+    name: Detectar código del servicio
+    runs-on: self-hosted
+    outputs:
+      has_code: ${{ steps.check.outputs.has_code }}
+      has_dockerfile: ${{ steps.check.outputs.has_dockerfile }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check código y Dockerfile
+        id: check
+        run: |
+          if [ -n "$(find "$SERVICE_DIR" \( -name '*.go' -o -name '*.java' -o -name 'go.mod' -o -name 'build.gradle*' \) -print -quit 2>/dev/null)" ]; then
+            echo "has_code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_code=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f "$SERVICE_DIR/Dockerfile" ]; then
+            echo "has_dockerfile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_dockerfile=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # --------------------------------------------------------
   # Tests unitarios (CA-08: si fallan, el check queda failed)
   # --------------------------------------------------------
   tests:
     name: Tests (${{ inputs.lenguaje || 'go' }})
-    if: hashFiles(format('services/{0}/**', inputs.servicio || 'patron')) != ''
+    needs: detect
+    if: needs.detect.outputs.has_code == 'true'
     runs-on: self-hosted
     steps:
       - name: Checkout
@@ -97,8 +126,8 @@ jobs:
   # --------------------------------------------------------
   build:
     name: Build & push ECR
-    needs: tests
-    if: hashFiles(format('services/{0}/Dockerfile', inputs.servicio || 'patron')) != ''
+    needs: [detect, tests]
+    if: needs.detect.outputs.has_dockerfile == 'true' && needs.tests.result == 'success'
     runs-on: self-hosted
     outputs:
       image: ${{ steps.image.outputs.image }}
@@ -133,7 +162,7 @@ jobs:
   # --------------------------------------------------------
   security:
     name: SBOM & Trivy scan
-    needs: [tests, build]
+    needs: [detect, build]
     if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: self-hosted
     env:
