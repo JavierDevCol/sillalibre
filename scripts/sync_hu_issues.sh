@@ -81,6 +81,14 @@ for hu_dir in "$HU_ROOT"/HU-*/; do
       echo ""
       echo "</details>"
     fi
+    if [[ -f "${hu_dir}Tracking.md" ]]; then
+      echo ""
+      echo "<details><summary>📈 Tracking (progreso y evidencia)</summary>"
+      echo ""
+      cat "${hu_dir}Tracking.md"
+      echo ""
+      echo "</details>"
+    fi
   } > "$body_file"
 
   existing="${ISSUE_BY_PREFIX["[${hu_id}]"]:-}"
