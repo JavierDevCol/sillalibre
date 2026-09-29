@@ -8,7 +8,7 @@
 | **Inicio** | 2026-09-28 |
 | **Estado** | EN_PROGRESO |
 | **Modo ejecución** | fase_por_fase |
-| **Rama de trabajo** | *(pendiente de confirmación)* |
+| **Rama de trabajo** | hu-HU-ENA-0-03-pipeline-cicd |
 | **Progreso** | 27% (3/11 tareas) |
 | **Sección actual** | 2/6 - Fase 2: Workflow base |
 | **Última actualización** | 2026-09-28 |
