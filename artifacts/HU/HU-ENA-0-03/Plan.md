@@ -113,7 +113,7 @@ validado_por: ">validar_ca"
 
 #### EJEC-10: Deploy manual a prod (approval gate) [EJECUTADA]
 - [X] Job `deploy-prod` con `environment: prod` — aprobación manual (CA-06)
-- [X] Requiere crear Environment `prod` en GitHub con *required reviewers* (config manual)
+- [X] **Mecanismo:** input `deploy_prod=true` en `workflow_dispatch` — *required reviewers* no disponible en plan Free (límite detectado en ejecución; alternativa a la decisión #3)
 - **Estimación:** 0.5h | **Dependencia:** EJEC-09
 
 ---
@@ -172,7 +172,9 @@ validado_por: ">validar_ca"
 | Environments → `dev` | Variables: `ECS_CLUSTER` | `sillalibre-dev` |
 | Environments → `dev` | Variables: `ECS_TASK_FAMILY` | `sillalibre-dev-patron` |
 | Environments → `dev` | Variables: `AWS_ROLE_ARN`, `AWS_REGION` | igual que repo (precedencia de environment) |
-| Environments → `prod` | **Required reviewers** (approval gate, CA-06) + mismas variables con valores `sillalibre-prod` / `sillalibre-prod-patron` | — |
+| Environments → `prod` | ~~Required reviewers~~ **no disponible en plan Free** → gate = input `deploy_prod=true` al hacer `workflow_dispatch` + variables `ECS_CLUSTER`/`ECS_TASK_FAMILY` con valores `sillalibre-prod*` | — |
+| Runner | `floci-runner` (self-hosted, systemd user service) — floci vive en localhost, los runners de GitHub no lo alcanzan | — |
+| ⚠️ Transitorio | `AWS_ROLE_ARN` del environment `prod` apunta al rol **dev** — la infra del workspace `prod` todavía no se aplica (ENA-0-03 solo corrió `dev`) | — |
 
 ### Decisiones Técnicas
 
@@ -182,6 +184,7 @@ validado_por: ">validar_ca"
 | Q2-B | Build tool Java = **Gradle** | Planificación 2026-09-28 |
 | Q3-A | Validación parcial; CA-01/04/05/08/09 se cierran en ENA-0-04 | Planificación 2026-09-28 |
 | #3 | GitHub Environments con required reviewers para prod | Refinamiento Iteración 1 |
+| Q4 | Approval gate prod = input `deploy_prod` en dispatch | Plan Free no soporta required reviewers (detectado en EJEC-10, 2026-09-28) |
 
 ### Riesgos
 

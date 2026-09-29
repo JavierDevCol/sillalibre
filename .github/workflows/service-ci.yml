@@ -34,6 +34,10 @@ on:
         description: "Imagen a escanear cuando no hay código de servicio (validación del fail-gate)"
         type: string
         default: "nginx:alpine"
+      deploy_prod:
+        description: "Aprobación manual de prod: marca para desplegar a prod tras el deploy dev"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -214,13 +218,18 @@ jobs:
             --force-new-deployment
 
   # --------------------------------------------------------
-  # Deploy prod: aprobación manual vía environment `prod`
-  # con required reviewers (CA-06 · decisión #3)
+  # Deploy prod: aprobación manual = disparo explícito con
+  # input deploy_prod=true (limitación plan Free: GitHub no
+  # permite required reviewers en environments) — CA-06
   # --------------------------------------------------------
   deploy-prod:
     name: Deploy prod (aprobación manual)
     needs: [build, deploy-dev]
-    if: always() && github.ref == 'refs/heads/main' && needs.deploy-dev.result == 'success'
+    if: >-
+      always() && github.ref == 'refs/heads/main' &&
+      needs.deploy-dev.result == 'success' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.deploy_prod == true
     runs-on: self-hosted
     environment: prod
     env:
