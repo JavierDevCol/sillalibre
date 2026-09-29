@@ -74,16 +74,23 @@ board_opt_id() {            # ids de las opciones del campo Status
   esac
 }
 
-sync_board() {              # idempotente y best-effort: jamás rompe el sync
+sync_board() {              # best-effort: jamás rompe el sync, pero SIEMPRE avisa
   local num="$1" status="$2" item opt url
   url="https://github.com/$REPO/issues/$num"
   item="${ITEM_BY_URL[$url]:-}"
-  [[ -z "$item" ]] && item="$(gh project item-add "$PROJECT_NUM" --owner "$PROJECT_OWNER" \
-    --url "$url" --format json --jq '.id' 2>/dev/null || true)"
-  [[ -z "$item" ]] && return 0
+  if [[ -z "$item" ]]; then
+    item="$(gh project item-add "$PROJECT_NUM" --owner "$PROJECT_OWNER" \
+      --url "$url" --format json --jq '.id' 2>&1)" \
+      || { echo "⚠️ board: falló item-add $url — ${item:-sin detalle} (¿secret PROJECTS_TOKEN con scope 'project'?)" >&2; return 0; }
+    item="${item##*$'\n'}"
+  fi
   opt="$(board_opt_id "$status")"
-  [[ -n "$opt" ]] && gh project item-edit --id "$item" --project-id "$PROJECT_ID" \
-    --field-id "$STATUS_FIELD_ID" --single-select-option-id "$opt" >/dev/null 2>&1 || true
+  if [[ -n "$opt" ]]; then
+    gh project item-edit --id "$item" --project-id "$PROJECT_ID" \
+      --field-id "$STATUS_FIELD_ID" --single-select-option-id "$opt" >/dev/null \
+      || echo "⚠️ board: falló mover #$num a \"$status\"" >&2
+  fi
+  return 0
 }
 
 # Índice local de issues existentes (evita N llamadas API)
