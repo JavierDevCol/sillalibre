@@ -1,0 +1,121 @@
+# ============================================================
+# Service CI/CD (HU-ENA-0-03 · patrón ADR-009)
+# ------------------------------------------------------------
+# Workflow reutilizable parametrizado por servicio.
+# Los callers (uno por servicio) hacen `uses: ./...service-ci.yml`.
+# Requiere variables de repositorio:
+#   vars.AWS_ROLE_ARN   → rol OIDC (terraform output github_actions_role_arn)
+#   vars.AWS_REGION     → región AWS (default us-east-1)
+# ============================================================
+name: Service CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      servicio:
+        description: "Nombre del servicio (carpeta services/<servicio>)"
+        type: string
+        required: true
+      lenguaje:
+        description: "Stack del servicio: java | go"
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      servicio:
+        description: "Servicio a ejecutar"
+        type: string
+        default: patron
+      lenguaje:
+        description: "Stack: java | go"
+        type: string
+        default: go
+      image:
+        description: "Imagen a escanear cuando no hay código de servicio (validación del fail-gate)"
+        type: string
+        default: "nginx:alpine"
+
+permissions:
+  contents: read
+  id-token: write # OIDC — cero claves estáticas (CA-07)
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+  SERVICE: ${{ inputs.servicio || 'patron' }}
+  LANG: ${{ inputs.lenguaje || 'go' }}
+  SERVICE_DIR: services/${{ inputs.servicio || 'patron' }}
+  ECR_REPOSITORY: sillalibre/${{ inputs.servicio || 'patron' }}
+
+jobs:
+  # --------------------------------------------------------
+  # Tests unitarios (CA-08: si fallan, el check queda failed)
+  # --------------------------------------------------------
+  tests:
+    name: Tests (${{ inputs.lenguaje || 'go' }})
+    if: hashFiles(format('services/{0}/**', inputs.servicio || 'patron')) != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- Java (Gradle + cache) ---
+      - name: Setup Java 21 (Gradle cache)
+        if: env.LANG == 'java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Gradle test
+        if: env.LANG == 'java'
+        working-directory: ${{ env.SERVICE_DIR }}
+        run: ./gradlew test --no-daemon
+
+      # --- Go (module cache) ---
+      - name: Setup Go (module cache)
+        if: env.LANG == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: services/*/go.mod
+
+      - name: Go test
+        if: env.LANG == 'go'
+        working-directory: ${{ env.SERVICE_DIR }}
+        run: go test ./...
+
+  # --------------------------------------------------------
+  # Build imagen Docker → push a ECR (CA-01)
+  # --------------------------------------------------------
+  build:
+    name: Build & push ECR
+    needs: tests
+    if: hashFiles(format('services/{0}/Dockerfile', inputs.servicio || 'patron')) != ''
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}"
+          docker build -t "$IMAGE" "$SERVICE_DIR"
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"

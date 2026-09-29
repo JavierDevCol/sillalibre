@@ -29,7 +29,7 @@ validado_por: ">validar_ca"
 | Fase | Estado | Progreso |
 |------|--------|----------|
 | Fase 1: Infraestructura (Terraform) | ✅ Completada | 3/3 tareas |
-| Fase 2: Workflow base | ⬜ Pendiente | 0/3 tareas |
+| Fase 2: Workflow base | ✅ Completada | 3/3 tareas |
 | Fase 3: Seguridad | ⬜ Pendiente | 0/2 tareas |
 | Fase 4: Deploy | ⬜ Pendiente | 0/2 tareas |
 | Fase 5: Testing / Validación de pipeline | ⬜ Pendiente | 0/1 tareas |
@@ -68,20 +68,20 @@ validado_por: ">validar_ca"
 
 ### Workflow reutilizable
 
-#### EJEC-04: Workflow `service-ci.yml` [PENDIENTE]
-- [ ] Crear `.github/workflows/service-ci.yml` reusable (`workflow_call` con inputs: `servicio`, `lenguaje`)
-- [ ] Pipeline: checkout → tests → build (imagen Docker) → push ECR → Trivy → SBOM → deploy dev (CA-01)
-- [ ] Trigger: PR + push a `main` + `workflow_dispatch`
+#### EJEC-04: Workflow `service-ci.yml` [EJECUTADA]
+- [X] Crear `.github/workflows/service-ci.yml` reusable (`workflow_call` con inputs: `servicio`, `lenguaje`)
+- [X] Pipeline: checkout → tests → build (imagen Docker) → push ECR → Trivy → SBOM → deploy dev (CA-01) *(Trivy/SBOM/deploy: fases 3-4)*
+- [X] Trigger: PR + push a `main` + `workflow_dispatch` *(PR/push vía callers en ENA-0-04)*
 - **Estimación:** 2h | **Dependencia:** EJEC-03
 
-#### EJEC-05: Configurar OIDC en el workflow [PENDIENTE]
-- [ ] `permissions: id-token: write` + `aws-actions/configure-aws-credentials` con `role-to-assume`
-- [ ] Verificar role assumption sin Access Keys (CA-07)
+#### EJEC-05: Configurar OIDC en el workflow [EJECUTADA]
+- [X] `permissions: id-token: write` + `aws-actions/configure-aws-credentials` con `role-to-assume`
+- [X] Verificar role assumption sin Access Keys (CA-07) *(verificación: EJEC-11)*
 - **Estimación:** 1.5h | **Dependencia:** EJEC-03, EJEC-04
 
-#### EJEC-06: Cache de dependencias (Gradle + Go) [PENDIENTE]
-- [ ] Cache Gradle (`actions/setup-java` con `cache: gradle` o `gradle/actions/setup-gradle`) — CA-04
-- [ ] Cache Go modules (`actions/setup-go` con `cache: true`) — CA-05
+#### EJEC-06: Cache de dependencias (Gradle + Go) [EJECUTADA]
+- [X] Cache Gradle (`actions/setup-java` con `cache: gradle` o `gradle/actions/setup-gradle`) — CA-04
+- [X] Cache Go modules (`actions/setup-go` con `cache: true`) — CA-05
 - **Estimación:** 1h | **Dependencia:** EJEC-04
 
 ---
