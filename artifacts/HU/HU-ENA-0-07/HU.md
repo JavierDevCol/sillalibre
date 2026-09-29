@@ -7,6 +7,7 @@
 | **ID** | ENA-0-07 |
 | **Título** | Reglas Arquitectónicas del Proyecto |
 | **Tipo** | Enabler |
+| **Sprint** | S0-A |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
 | **Complejidad** | 🟡 MEDIO |

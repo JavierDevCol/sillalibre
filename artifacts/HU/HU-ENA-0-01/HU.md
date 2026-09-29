@@ -7,6 +7,7 @@
 | **ID** | ENA-0-01 |
 | **Título** | Decisión de Región + FinOps Base |
 | **Tipo** | Enabler |
+| **Sprint** | S0-A |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
 | **Complejidad** | 🟢 BAJO |

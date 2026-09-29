@@ -7,6 +7,7 @@
 | **ID** | HU-ENA-0-02 |
 | **Título** | Terraform Base Endurecido |
 | **Tipo** | Enabler |
+| **Sprint** | S0-B |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
 | **Complejidad** | 🔴 ALTO |

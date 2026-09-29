@@ -7,6 +7,7 @@
 | **ID** | HU-ENA-0-10 |
 | **Título** | Métricas de Cobertura de Tests |
 | **Tipo** | Enabler |
+| **Sprint** | S0-C |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P1 |
 | **Complejidad** | 🟡 MEDIO |

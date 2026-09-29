@@ -7,6 +7,7 @@
 | **ID** | ENA-0-08 |
 | **Título** | Estándares de Ingeniería y Convenciones |
 | **Tipo** | Enabler |
+| **Sprint** | S0-A |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
 | **Complejidad** | 🟡 MEDIO |

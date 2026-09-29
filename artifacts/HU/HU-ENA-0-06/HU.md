@@ -7,6 +7,7 @@
 | **ID** | HU-ENA-0-06 |
 | **Título** | Contratos OpenAPI desde el Día 1 |
 | **Tipo** | Enabler |
+| **Sprint** | S0-B |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P1 |
 | **Complejidad** | 🟢 BAJO |

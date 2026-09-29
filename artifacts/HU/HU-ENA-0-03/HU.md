@@ -7,6 +7,7 @@
 | **ID** | HU-ENA-0-03 |
 | **Título** | Pipeline Patrón CI/CD |
 | **Tipo** | Enabler |
+| **Sprint** | S0-B |
 | **Proyecto** | SillaLibre |
 | **Prioridad** | P0 |
 | **Complejidad** | 🔴 ALTO |
