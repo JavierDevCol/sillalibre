@@ -27,12 +27,12 @@
 ## 2. Criterios de Aceptación
 
 - [ ] **CA-01:** Dado que creo un PR, cuando el pipeline se ejecuta, entonces pasa por: checkout → tests → build (imagen Docker) → push a ECR → Trivy scan → SBOM → deploy (dev)
-- [ ] **CA-02:** Dado que Trivy detecta un hallazgo CRITICAL o HIGH, cuando el pipeline termina, entonces el check del PR queda en `failed` (merge bloqueado por convención — sin branch protection en plan Free, ADR-009)
-- [ ] **CA-03:** Dado que el build es exitoso, cuando se genera el SBOM (CycloneDX), entonces se guarda como artifact del workflow con retención de **90 días**
+- [X] **CA-02:** Dado que Trivy detecta un hallazgo CRITICAL o HIGH, cuando el pipeline termina, entonces el check del PR queda en `failed` (merge bloqueado por convención — sin branch protection en plan Free, ADR-009)
+- [X] **CA-03:** Dado que el build es exitoso, cuando se genera el SBOM (CycloneDX), entonces se guarda como artifact del workflow con retención de **90 días**
 - [ ] **CA-04:** Dado que el servicio es Java, cuando se ejecuta el build, entonces usa **Gradle** con cache de dependencias
 - [ ] **CA-05:** Dado que el servicio es Go, cuando se ejecuta el build, entonces usa `go build` con cache de modules
-- [ ] **CA-06:** Dado que el deploy es a dev, cuando se ejecuta, entonces es automático; si es a prod, entonces requiere aprobación manual vía **GitHub Environments (required reviewers)**
-- [ ] **CA-07:** Dado que el pipeline usa OIDC, cuando accede a AWS, entonces no hay claves estáticas (role assumption)
+- [X] **CA-06:** Dado que el deploy es a dev, cuando se ejecuta, entonces es automático; si es a prod, entonces requiere aprobación manual **explícita (input `deploy_prod=true` en dispatch)** — *enmendado por Q4: GitHub Environments con required reviewers no está disponible en plan Free (límite detectado EJEC-10; decisión aprobada)*
+- [X] **CA-07:** Dado que el pipeline usa OIDC, cuando accede a AWS, entonces no hay claves estáticas (role assumption)
 - [ ] **CA-08:** Dado que los tests o el build fallan, cuando termina el pipeline, entonces el check del PR queda en `failed` (fail-gate)
 - [ ] **CA-09:** Dado que el health check de la task ECS falla, cuando se detecta en el deploy rolling, entonces **ECS deployment circuit breaker revierte automáticamente** a la revisión anterior
 
@@ -46,7 +46,7 @@
 |---|----------|-----------|---------|
 | 1 | ¿OIDC o claves estáticas? | OIDC (zero static keys) | Alto |
 | 2 | ¿Deploy automático en prod? | No, aprobación manual | Alto |
-| 3 | ¿Usamos GitHub Environments para proteger prod? | **Sí** — usar environments de GitHub (prod con *required reviewers*); es la implementación nativa del CA-06, sin código adicional | Alta |
+| 3 | ¿Usamos GitHub Environments para proteger prod? | **Sí** — environments de GitHub para dev/prod (vars + gating); *required reviewers* no disponible en plan Free → aprobación manual por input `deploy_prod` (Q4, decisión aprobada) | Alta |
 | 4 | ¿CA para tests/build fallan y rollback en health check? | **Sí** — añadidos CA-08 (fail-gate) y CA-09 (ECS circuit breaker, feature nativa) | Alta |
 | 5 | ¿Umbral de duración del pipeline? | Objetivo informativo **≤ 10 min con cache caliente**, sin fail-gate (sin gate en ADR-009) | Media |
 | 6 | ¿Build tool Java: Maven o Gradle? | **Gradle** (decisión en planificación, Q2 — más rápido en CI, curva aceptable para el equipo) | Media |
@@ -199,6 +199,7 @@
 | 2026-09-28 | Resolución pregunta #3 | GitHub Environments para prod (required reviewers) — sin preguntas pendientes |
 | 2026-09-28 | Iteración 2 (ajustes de validación) | CA-01 + ECR · CA-0-02→CA-02 · CA-03 retención 90d · CA-04 Maven · CA-09 circuit breaker · CA-08 fail-gate tests/build · preguntas #4-#6 resueltas · alcance lint/contract/coverage externalizado |
 | 2026-09-28 | Iteración 3 (ambigüedades de planificación) | Q1-A: Slice 0 infra (ECR/ECS/OIDC, +4h, 13 SP, 🔴 ALTO) · Q2-B: Gradle · Q3-A: validación parcial (CA-01/04/05/08/09 se cierran en ENA-0-04) |
+| 2026-09-29 | Enmienda CA-06 (Q4) + CA-02/03/07 verificados | Gate prod por input `deploy_prod` (plan Free sin required reviewers) · CA-02/03/07 → [X] con evidencia EJEC-11 |
 
 ---
 

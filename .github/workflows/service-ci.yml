@@ -207,8 +207,14 @@ jobs:
   # --------------------------------------------------------
   deploy-dev:
     name: Deploy dev (ECS rolling)
-    needs: [build, security]
-    if: always() && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main') && needs.security.result == 'success'
+    needs: [tests, build, security]
+    # CA-08: un tests fallido (o cancelado) bloquea el deploy;
+    # 'skipped' sigue permitido (servicios aún sin código — Q3-A)
+    if: >-
+      always() &&
+      (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main') &&
+      (needs.tests.result == 'success' || needs.tests.result == 'skipped') &&
+      needs.security.result == 'success'
     runs-on: self-hosted
     environment: dev
     env:

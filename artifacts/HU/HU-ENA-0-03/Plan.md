@@ -157,8 +157,8 @@ validado_por: ">validar_ca"
 | CA-02 | Trivy CRITICAL/HIGH → check failed | [X] — Runs 1-2 (HIGH real en `nginx:alpine` → exit 1) |
 | CA-03 | SBOM artifact retención 90 días | [X] — artifact `sbom-patron-<sha>` subido ANTES del gate |
 | CA-04 | Build Java con Gradle + cache | [~] Parcial — cierre en **ENA-0-04/ENA-0-09** (sin código Java aún) |
-| CA-05 | Build Go con cache de modules | [~] Parcial — cierre en **ENA-0-09** (servicio `notificacion`) |
-| CA-06 | dev automático / prod aprobación manual | [X] — Run 4 (true→ambos) / Run 5 (false→prod skipped) |
+| CA-05 | Build Go con cache de modules | [~] Parcial — cierre en **ENA-0-04** (Q3-A; sin código Go aún) |
+| CA-06 | dev automático / prod aprobación manual | [X] — Runs 4-5 (gate por input `deploy_prod`; CA enmendado por Q4, ver Refinamiento) |
 | CA-07 | OIDC sin claves estáticas | [X] — `configure-aws-credentials` + role assumption OK contra floci |
 | CA-08 | tests/build fallan → check failed | [~] Parcial — cierre con servicio en **ENA-0-04** |
 | CA-09 | Health check falla → rollback ECS | [~] Parcial — revert real requiere servicio en **ENA-0-04** |
