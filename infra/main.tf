@@ -158,10 +158,11 @@ module "ecs" {
 module "oidc_role" {
   source = "./modules/oidc-role"
 
-  environment         = var.environment
-  project_name        = var.project_name
-  github_repository   = var.github_repository
-  ecr_repository_arns = values(module.ecr.repository_arns)
+  environment          = var.environment
+  project_name         = var.project_name
+  github_repository    = var.github_repository
+  create_oidc_provider = var.create_oidc_provider
+  ecr_repository_arns  = values(module.ecr.repository_arns)
   task_role_arns = [
     module.ecs.task_execution_role_arn,
     module.ecs.task_role_arn

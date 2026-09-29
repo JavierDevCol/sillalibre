@@ -28,6 +28,12 @@ variable "github_repository" {
   }
 }
 
+variable "create_oidc_provider" {
+  description = "Crear el provider OIDC (global de cuenta — solo debe crearse una vez por cuenta)"
+  type        = bool
+  default     = true
+}
+
 variable "ecr_repository_arns" {
   description = "ARNs de los repositorios ECR con push permitido"
   type        = list(string)

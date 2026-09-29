@@ -128,3 +128,9 @@ variable "github_repository" {
   type        = string
   default     = "JavierDevCol/sillalibre"
 }
+
+variable "create_oidc_provider" {
+  description = "Crear el provider OIDC de GitHub (global de cuenta — solo en un workspace)"
+  type        = bool
+  default     = true
+}

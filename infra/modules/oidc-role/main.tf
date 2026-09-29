@@ -7,9 +7,11 @@
 
 data "aws_caller_identity" "current" {}
 
-# --- Provider OIDC de GitHub ---
+# --- Provider OIDC de GitHub (global de cuenta: crear UNA sola vez) ---
 
 resource "aws_iam_openid_connect_provider" "github" {
+  count = var.create_oidc_provider ? 1 : 0
+
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
@@ -18,6 +20,11 @@ resource "aws_iam_openid_connect_provider" "github" {
     Name      = "${var.project_name}-github-oidc"
     ManagedBy = "terraform"
   }
+}
+
+locals {
+  # Si el provider ya existe en la cuenta (otro workspace), se construye su ARN
+  oidc_provider_arn = var.create_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
 }
 
 # --- Rol confiable para GitHub Actions ---
@@ -31,7 +38,7 @@ resource "aws_iam_role" "github_actions" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
+          Federated = local.oidc_provider_arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
