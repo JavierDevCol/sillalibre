@@ -164,3 +164,94 @@ jobs:
           format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
+
+  # --------------------------------------------------------
+  # Deploy dev: automático en main, ECS rolling (CA-06)
+  # Usa environment `dev` (sin reviewers) con sus vars:
+  #   ECS_CLUSTER, ECS_TASK_FAMILY
+  # --------------------------------------------------------
+  deploy-dev:
+    name: Deploy dev (ECS rolling)
+    needs: [build, security]
+    if: always() && github.ref == 'refs/heads/main' && needs.security.result == 'success'
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
+      ECS_SERVICE: ${{ inputs.servicio || 'patron' }}
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Register task definition con imagen nueva
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_TASK_FAMILY" \
+            --query taskDefinition > taskdef.json
+          jq --arg img "$TARGET_IMAGE" \
+            '.containerDefinitions[0].image = $img
+             | del(.taskDefinitionArn, .revision, .status,
+                   .requiresAttributes, .compatibilities,
+                   .registeredAt, .registeredBy)' \
+            taskdef.json > taskdef-new.json
+          aws ecs register-task-definition \
+            --cli-input-json file://taskdef-new.json
+
+      - name: ECS rolling update
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$ECS_TASK_FAMILY" \
+            --force-new-deployment
+
+  # --------------------------------------------------------
+  # Deploy prod: aprobación manual vía environment `prod`
+  # con required reviewers (CA-06 · decisión #3)
+  # --------------------------------------------------------
+  deploy-prod:
+    name: Deploy prod (aprobación manual)
+    needs: [build, deploy-dev]
+    if: always() && github.ref == 'refs/heads/main' && needs.deploy-dev.result == 'success'
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
+      ECS_SERVICE: ${{ inputs.servicio || 'patron' }}
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Register task definition con imagen nueva
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_TASK_FAMILY" \
+            --query taskDefinition > taskdef.json
+          jq --arg img "$TARGET_IMAGE" \
+            '.containerDefinitions[0].image = $img
+             | del(.taskDefinitionArn, .revision, .status,
+                   .requiresAttributes, .compatibilities,
+                   .registeredAt, .registeredBy)' \
+            taskdef.json > taskdef-new.json
+          aws ecs register-task-definition \
+            --cli-input-json file://taskdef-new.json
+
+      - name: ECS rolling update
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$ECS_TASK_FAMILY" \
+            --force-new-deployment

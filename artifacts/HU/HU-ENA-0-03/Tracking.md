@@ -9,8 +9,8 @@
 | **Estado** | EN_PROGRESO |
 | **Modo ejecución** | fase_por_fase |
 | **Rama de trabajo** | hu-HU-ENA-0-03-pipeline-cicd |
-| **Progreso** | 73% (8/11 tareas) |
-| **Sección actual** | 4/6 - Fase 4: Deploy |
+| **Progreso** | 91% (10/11 tareas) |
+| **Sección actual** | 5/6 - Fase 5: Testing / Validación de pipeline |
 | **Última actualización** | 2026-09-28 |
 
 ---
@@ -23,6 +23,7 @@
 | 2026-09-28 | EJEC-01..03 | Fase 1 completada | ✅ terraform validate + plan + apply OK en workspace dev (12 recursos: ECR patron, ECS cluster+service, rol OIDC) | 35min |
 | 2026-09-28 | EJEC-04..06 | Fase 2 completada | ✅ service-ci.yml creado (workflow_call + dispatch, OIDC, caches Gradle/Go); YAML validado | 20min |
 | 2026-09-28 | EJEC-07..08 | Fase 3 completada | ✅ job security: SBOM CycloneDX (artifact 90d, antes del gate) + Trivy fail-gate CRITICAL/HIGH | 15min |
+| 2026-09-28 | EJEC-09..10 | Fase 4 completada | ✅ jobs deploy-dev (auto en main, environment dev) y deploy-prod (environment prod = approval gate); YAML validado | 20min |
 
 ---
 

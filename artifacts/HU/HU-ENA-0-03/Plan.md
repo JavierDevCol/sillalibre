@@ -31,7 +31,7 @@ validado_por: ">validar_ca"
 | Fase 1: Infraestructura (Terraform) | ✅ Completada | 3/3 tareas |
 | Fase 2: Workflow base | ✅ Completada | 3/3 tareas |
 | Fase 3: Seguridad | ✅ Completada | 2/2 tareas |
-| Fase 4: Deploy | ⬜ Pendiente | 0/2 tareas |
+| Fase 4: Deploy | ✅ Completada | 2/2 tareas |
 | Fase 5: Testing / Validación de pipeline | ⬜ Pendiente | 0/1 tareas |
 | Fase Final: Validación CA | ⬜ Pendiente | 0/9 criterios |
 
@@ -106,14 +106,14 @@ validado_por: ">validar_ca"
 
 ### Despliegue a ambientes
 
-#### EJEC-09: Deploy automático a dev (ECS rolling) [PENDIENTE]
-- [ ] Job `deploy-dev` tras Trivy verde: `aws ecs update-service --force-new-deployment`
-- [ ] Auto en push a `main`; elegible en PR (CA-06)
+#### EJEC-09: Deploy automático a dev (ECS rolling) [EJECUTADA]
+- [X] Job `deploy-dev` tras Trivy verde: register task definition + `aws ecs update-service --force-new-deployment`
+- [X] Automático en ref `main` (push o dispatch); **no corre en PR** (corrección: desplegar PRs al ambiente compartido dev sería inseguro)
 - **Estimación:** 1.5h | **Dependencia:** EJEC-01, EJEC-02, EJEC-05, EJEC-07
 
-#### EJEC-10: Deploy manual a prod (approval gate) [PENDIENTE]
-- [ ] Crear GitHub Environment `prod` con **required reviewers** (decisión #3)
-- [ ] Job `deploy-prod` con `environment: prod` — aprobación manual (CA-06)
+#### EJEC-10: Deploy manual a prod (approval gate) [EJECUTADA]
+- [X] Job `deploy-prod` con `environment: prod` — aprobación manual (CA-06)
+- [X] Requiere crear Environment `prod` en GitHub con *required reviewers* (config manual)
 - **Estimación:** 0.5h | **Dependencia:** EJEC-09
 
 ---
@@ -162,6 +162,17 @@ validado_por: ">validar_ca"
 ---
 
 ## Notas de Implementación
+
+### Configuración manual requerida (GitHub)
+
+| Dónde | Qué | Valor |
+|-------|-----|-------|
+| Repo → Actions → Variables | `AWS_ROLE_ARN` | `arn:aws:iam::<cuenta>:role/sillalibre-dev-github-actions` |
+| Repo → Actions → Variables | `AWS_REGION` | `us-east-1` |
+| Environments → `dev` | Variables: `ECS_CLUSTER` | `sillalibre-dev` |
+| Environments → `dev` | Variables: `ECS_TASK_FAMILY` | `sillalibre-dev-patron` |
+| Environments → `dev` | Variables: `AWS_ROLE_ARN`, `AWS_REGION` | igual que repo (precedencia de environment) |
+| Environments → `prod` | **Required reviewers** (approval gate, CA-06) + mismas variables con valores `sillalibre-prod` / `sillalibre-prod-patron` | — |
 
 ### Decisiones Técnicas
 
