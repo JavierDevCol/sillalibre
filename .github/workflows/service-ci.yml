@@ -119,3 +119,48 @@ jobs:
           docker build -t "$IMAGE" "$SERVICE_DIR"
           docker push "$IMAGE"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  # --------------------------------------------------------
+  # Seguridad: SBOM + Trivy fail-gate (CA-02, CA-03)
+  # El SBOM se genera ANTES del gate para que siempre quede
+  # como artifact aunque el scan bloquee.
+  # --------------------------------------------------------
+  security:
+    name: SBOM & Trivy scan
+    needs: [tests, build]
+    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-latest
+    env:
+      TARGET_IMAGE: ${{ needs.build.outputs.image || inputs.image || 'nginx:alpine' }}
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.TARGET_IMAGE }}
+          format: cyclonedx
+          output: sbom.cdx.json
+          exit-code: "0"
+
+      - name: Upload SBOM artifact (90 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ env.SERVICE }}-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 90
+
+      - name: Trivy fail-gate (CRITICAL/HIGH bloquea)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.TARGET_IMAGE }}
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH

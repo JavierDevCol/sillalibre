@@ -30,7 +30,7 @@ validado_por: ">validar_ca"
 |------|--------|----------|
 | Fase 1: Infraestructura (Terraform) | ✅ Completada | 3/3 tareas |
 | Fase 2: Workflow base | ✅ Completada | 3/3 tareas |
-| Fase 3: Seguridad | ⬜ Pendiente | 0/2 tareas |
+| Fase 3: Seguridad | ✅ Completada | 2/2 tareas |
 | Fase 4: Deploy | ⬜ Pendiente | 0/2 tareas |
 | Fase 5: Testing / Validación de pipeline | ⬜ Pendiente | 0/1 tareas |
 | Fase Final: Validación CA | ⬜ Pendiente | 0/9 criterios |
@@ -90,14 +90,14 @@ validado_por: ">validar_ca"
 
 ### Trancha de seguridad del pipeline
 
-#### EJEC-07: Trivy scan con fail-gate [PENDIENTE]
-- [ ] Integrar `aquasecurity/trivy-action` sobre la imagen construida
-- [ ] Fail-gate: `exit-code: '1'` solo para CRITICAL/HIGH (CA-02)
+#### EJEC-07: Trivy scan con fail-gate [EJECUTADA]
+- [X] Integrar `aquasecurity/trivy-action` sobre la imagen construida
+- [X] Fail-gate: `exit-code: '1'` solo para CRITICAL/HIGH (CA-02)
 - **Estimación:** 1.5h | **Dependencia:** EJEC-04
 
-#### EJEC-08: SBOM como artifact [PENDIENTE]
-- [ ] Generar SBOM con CycloneDX (trivy o syft) tras el build
-- [ ] Subir con `actions/upload-artifact` con `retention-days: 90` (CA-03)
+#### EJEC-08: SBOM como artifact [EJECUTADA]
+- [X] Generar SBOM con CycloneDX (trivy o syft) tras el build
+- [X] Subir con `actions/upload-artifact` con `retention-days: 90` (CA-03)
 - **Estimación:** 1h | **Dependencia:** EJEC-04
 
 ---
