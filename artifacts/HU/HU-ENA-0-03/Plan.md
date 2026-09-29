@@ -171,7 +171,7 @@ validado_por: ">validar_ca"
 - [X] Workflow verde con `workflow_dispatch` (Run 4)
 - [X] Prueba de fail-gate con imagen vulnerable (Runs 1-2, requisito ADR-009)
 - [X] Sin Access Keys en logs ni en variables del repo (OIDC exclusivo)
-- [ ] Revisión de código completada
+- [X] Revisión de código completada (analizar-calidad-codigo scope `commits`: 0 críticos; 10 hallazgos corregidos en `fd0fe56`, smoke run 36536412133 ✅)
 
 > \* Plan ejecuta sin errores; drift residual de floci documentado en EJEC-11.
 
