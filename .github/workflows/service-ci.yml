@@ -178,7 +178,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Generate SBOM (CycloneDX)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.TARGET_IMAGE }}
           format: cyclonedx
@@ -193,7 +193,7 @@ jobs:
           retention-days: 90
 
       - name: Trivy fail-gate (CRITICAL/HIGH bloquea)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.TARGET_IMAGE }}
           format: table
