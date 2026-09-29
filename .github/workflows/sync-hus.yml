@@ -31,6 +31,9 @@ jobs:
 
       - name: Ejecutar sincronizador
         env:
-          GH_TOKEN: ${{ github.token }}
+          # GITHUB_TOKEN no alcanza Projects (docs.github.com): si existe el
+          # secret PROJECTS_TOKEN (classic PAT con scope 'project') se usa para
+          # todo; si no, cae al token del repo y el board avisa en el log.
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN || github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: bash scripts/sync_hu_issues.sh
