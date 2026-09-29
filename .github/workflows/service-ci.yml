@@ -179,7 +179,7 @@ jobs:
   deploy-dev:
     name: Deploy dev (ECS rolling)
     needs: [build, security]
-    if: always() && github.ref == 'refs/heads/main' && needs.security.result == 'success'
+    if: always() && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main') && needs.security.result == 'success'
     runs-on: self-hosted
     environment: dev
     env:
@@ -226,7 +226,7 @@ jobs:
     name: Deploy prod (aprobación manual)
     needs: [build, deploy-dev]
     if: >-
-      always() && github.ref == 'refs/heads/main' &&
+      always() &&
       needs.deploy-dev.result == 'success' &&
       github.event_name == 'workflow_dispatch' &&
       inputs.deploy_prod == true
